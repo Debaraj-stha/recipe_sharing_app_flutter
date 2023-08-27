@@ -58,8 +58,9 @@ class myProvider with ChangeNotifier {
   );
   String baseURL = "http://10.0.2.2:8000";
   List<RecipeItem> _items = [];
-List<RecipeItem> get items=>_items;
-bool isLoading=true;
+  List<RecipeItem> get items => _items;
+  bool isLoading = true;
+  String email="dstha221@gmail.com";
   void initialize() {
     pageController = PageController();
     nameController = TextEditingController();
@@ -116,10 +117,9 @@ bool isLoading=true;
     notifyListeners();
   }
 
-  void login()async {
+  void login() async {
     try {
       final response = await http.post(Uri.parse(baseURL + "/login"), body: {
-        
         "email": emailController.text,
         "password": passwordController.text
       });
@@ -146,6 +146,7 @@ bool isLoading=true;
     nameController.clear();
     emailController.clear();
   }
+
   void signin() async {
     try {
       final response = await http.post(Uri.parse(baseURL + "/signup"), body: {
@@ -322,6 +323,7 @@ bool isLoading=true;
   }
 
   void postRecipe() async {
+    handleImage();
     try {
       handleImage();
       Dio.FormData formData = await Dio.FormData.fromMap({
@@ -330,19 +332,37 @@ bool isLoading=true;
         "description": descriptionController.text,
         "ingredients": ingredientsController.text,
         "steps": stepsController.text,
-        "hastas": hastagController
+        "hastags": hastagController,
+        "email":email
       });
       debugPrint(formData.fields.asMap().toString());
-      // var response;
-      // var dio = Dio.Dio();
-      // response = await dio.post("path", data: formData,
-      //     onSendProgress: (count, total) {
-      //   debugPrint(
-      //       "count: " + count.toString() + " total: " + total.toString());
-      // }, queryParameters: {"query": "test"},options: Dio.Options(validateStatus: (status) {
-      //   if()
-      // },));
-      // if(response.);
+      var response;
+      var dio = Dio.Dio();
+      response = await dio.post(baseURL + "/upload-recipe",
+          data: formData,
+          onSendProgress: (count, total) {
+            debugPrint(
+                "count: " + count.toString() + " total: " + total.toString());
+          },
+          queryParameters: {"query": "test"},
+          options: Dio.Options(
+            validateStatus: (status) {
+              if (status!.isEven) {
+                debugPrint("status: " + status.toString());
+                return true;
+              } else {
+                return false;
+              }
+            },
+          ));
+      final responseData =
+          response.data;
+
+      if (responseData['statusCode'] == 200) {
+        showmessage(responseData['message']);
+      } else {
+        showmessage(responseData['message'], bgColor: Colors.red);
+      }
     } on Exception catch (e) {
       showmessage("Exception occured : " + e.toString());
       debugPrint("Exception occured : " + e.toString());
@@ -357,37 +377,35 @@ bool isLoading=true;
     notifyListeners();
   }
 
-void loadRecipe()async{
-  try{
-    isLoading=true;
-    _items=[];
-    final response=await http.get(Uri.parse(baseURL+"/get-recipe"));
-    final data=jsonDecode(response.body);
-    
-    if(response.statusCode == 200) {
-      final recipedata=data['recipe'];
-      debugPrint(recipedata.toString());
-      for(var item in recipedata){
-        _items.add(RecipeItem.fromJson(item));
+  void loadRecipe() async {
+    try {
+      isLoading = true;
+      _items = [];
+      final response = await http.get(Uri.parse(baseURL + "/get-recipe"));
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final recipedata = data['recipe'];
+        debugPrint(recipedata.toString());
+        for (var item in recipedata) {
+          _items.add(RecipeItem.fromJson(item));
+        }
+        showmessage("Recipe loaded successfully");
+        Future.delayed(Duration(seconds: 2), () {
+          toggleLoading();
+        });
+      } else {
+        showmessage("Something went wrong.");
       }
-      showmessage("Recipe loaded successfully");
-      Future.delayed(Duration(seconds: 2),(){
-toggleLoading();
-      });
-     
+    } on Exception catch (e) {
+      debugPrint("exception occured : " + e.toString());
+      showmessage("exception occured : " + e.toString(), bgColor: Colors.red);
     }
-    else{
-      showmessage("Something went wrong.");
-    }
+    notifyListeners();
   }
-  on Exception catch (e) {
-    debugPrint("exception occured : " + e.toString());
-    showmessage("exception occured : " + e.toString(),bgColor: Colors.red);
+
+  void toggleLoading() {
+    isLoading = false;
+    notifyListeners();
   }
-  notifyListeners();
-}
-void toggleLoading(){
-isLoading = false;
-notifyListeners();
-}
 }

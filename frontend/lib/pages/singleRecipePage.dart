@@ -65,7 +65,7 @@ class _singleRecipePageState extends State<singleRecipePage> {
                   height: 90,
                   child: ClipOval(
                     child: Image(
-                      image: AssetImage(widget.user['profile']),
+                      image: AssetImage("asset/images/discover.png"),
                       fit: BoxFit.contain,
                     ),
                   ),

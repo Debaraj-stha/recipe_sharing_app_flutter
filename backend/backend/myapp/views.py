@@ -95,7 +95,9 @@ def uploadRecipe(request):
     try:
         data = request.data
         email = data.get("email")
-
+        image=data.get("image")
+        print("image")
+        print(image)
         # uploadForm = uploadRecipeForm(request.POST, request.FILES)
 
         if email is not None:
@@ -132,7 +134,7 @@ def uploadRecipe(request):
                     {
                         "success": True,
                         "statusCode": 200,
-                        "mesage": "Recipe uploaded successfully",
+                        "message": "Recipe uploaded successfully",
                     }
                 )
                 # uploadForm.save()
@@ -142,7 +144,7 @@ def uploadRecipe(request):
                 {
                     "success": False,
                     "statusCode": 400,
-                    "mesage": "Something went wrong. Please try again leter",
+                    "message": "Something went wrong. Please try again leter",
                 }
             )
     except ValueError as e:
