@@ -106,8 +106,7 @@ class _addRecipePageState extends State<addRecipePage> {
                   ],
                 ),
               );
-            }
-            else{
+            } else {
               return Container();
             }
           }),
@@ -116,13 +115,20 @@ class _addRecipePageState extends State<addRecipePage> {
               //   primary: constraints.primaryColor
               // ),
               onPressed: () {
-                provider.postRecipe();
-              },
-              child: smalltext(
-                text: "POST",
-                weight: FontWeight.bold,
-                color: constraints.colorBlack,
-              ))
+            provider.postRecipe();
+          }, child: Consumer<myProvider>(
+            builder: (context, value, child) {
+              return value.progress == 0
+                  ? smalltext(
+                      text: "POST",
+                      weight: FontWeight.bold,
+                      color: constraints.colorBlack,
+                    )
+                  : LinearProgressIndicator(
+                      value: value.progress.toDouble(),
+                    );
+            },
+          ))
         ]));
   }
 

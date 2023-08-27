@@ -61,6 +61,7 @@ class myProvider with ChangeNotifier {
   List<RecipeItem> get items => _items;
   bool isLoading = true;
   String email="dstha221@gmail.com";
+  int progress=0;
   void initialize() {
     pageController = PageController();
     nameController = TextEditingController();
@@ -324,6 +325,7 @@ class myProvider with ChangeNotifier {
 
   void postRecipe() async {
     handleImage();
+    debugPrint("image" + image.toString());
     try {
       handleImage();
       Dio.FormData formData = await Dio.FormData.fromMap({
@@ -332,7 +334,7 @@ class myProvider with ChangeNotifier {
         "description": descriptionController.text,
         "ingredients": ingredientsController.text,
         "steps": stepsController.text,
-        "hastags": hastagController,
+        "hastags": hastagController.text,
         "email":email
       });
       debugPrint(formData.fields.asMap().toString());
@@ -341,6 +343,7 @@ class myProvider with ChangeNotifier {
       response = await dio.post(baseURL + "/upload-recipe",
           data: formData,
           onSendProgress: (count, total) {
+            progress=count;
             debugPrint(
                 "count: " + count.toString() + " total: " + total.toString());
           },
@@ -367,6 +370,7 @@ class myProvider with ChangeNotifier {
       showmessage("Exception occured : " + e.toString());
       debugPrint("Exception occured : " + e.toString());
     }
+    image.clear();
   }
 
   void deleteSelectedImage(int index) {
