@@ -165,9 +165,7 @@ class _singleRecipeContentState extends State<singleRecipeContent>
                             ),
                           ),
                           smalltext(
-                            text: p
-                                .getReactionCount(widget.data.pk.toString())
-                                .toString(),
+                            text: widget.data.totalReact.toString(),
                             color: constraints.colorWhite,
                             weight: FontWeight.w700,
                           ),

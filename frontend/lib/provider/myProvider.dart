@@ -60,8 +60,10 @@ class myProvider with ChangeNotifier {
   List<RecipeItem> _items = [];
   List<RecipeItem> get items => _items;
   bool isLoading = true;
-  String email="dstha221@gmail.com";
-  int progress=0;
+  String email = "dstha221@gmail.com";
+  double progress = 0;
+  List<RecipeItem> _searchItems = [];
+  List<RecipeItem> get searchItems => _searchItems;
   void initialize() {
     pageController = PageController();
     nameController = TextEditingController();
@@ -242,23 +244,24 @@ class myProvider with ChangeNotifier {
     }
   }
 
-  void likeRecipie(String id, AnimationController controller) {
+  void likeRecipie(String id, AnimationController controller) async {
+    debugPrint("id = " + id);
     try {
-      if (manageReaction.containsKey(id)) {
-        if (manageReaction[id]) {
+      final response = await http.post(Uri.parse(baseURL + "/like-recipe"),
+          body: {"reactorId": "20", "recipeId": id});
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] != 200) {
+        showmessage(data['message'], bgColor: Colors.red);
+        if(data['statusCode'] ==400){
           controller.reverse();
-          countReaction[id] = countReaction[id] - 1;
-        } else {
-          controller.forward();
-          countReaction[id] = countReaction[id] + 1;
         }
-        manageReaction[id] = !manageReaction[id];
+        handleReactChangeUi(int.parse(id), false);
       } else {
-        countReaction[id] = 1;
+        showmessage(data['message']);
+        handleReactChangeUi(int.parse(id), true);
         controller.forward();
-        manageReaction[id] = true;
       }
-      debugPrint(manageReaction.toString());
+      debugPrint(data.toString());
     } on Exception catch (e) {
       showmessage("Exception has occured: " + e.toString());
     }
@@ -280,9 +283,25 @@ class myProvider with ChangeNotifier {
   }
 
   void handleupopUpButton(int index) {}
-  void searchItem() {
+  void clearField() {
     searchController.clear();
     searchNode.unfocus();
+  }
+
+  void searchRecipe(String q) async {
+    _searchItems.clear();
+    final response = await http.get(
+      Uri.parse(baseURL + "/search-recipe?q=${q}"),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final recipedata = data['recipe'];
+      debugPrint(recipedata.toString());
+      for (var item in recipedata) {
+        _searchItems.add(RecipeItem.fromJson(item));
+      }
+    }
+    notifyListeners();
   }
 
   void clearCreateRecipieField() {
@@ -316,15 +335,15 @@ class myProvider with ChangeNotifier {
   void handleImage() async {
     if (imageFile!.isNotEmpty) {
       for (var img in imageFile!) {
-        image.add(await Dio.MultipartFile.fromFile(img.path,
-            filename: img.path.split('.').last));
+        image.add(
+            await Dio.MultipartFile.fromFile(img.path, filename: img.path));
       }
+      debugPrint("image ha" + image.toString());
     }
     notifyListeners();
   }
 
-  void postRecipe() async {
-    handleImage();
+  void postRecipe(BuildContext context) async {
     debugPrint("image" + image.toString());
     try {
       handleImage();
@@ -335,7 +354,7 @@ class myProvider with ChangeNotifier {
         "ingredients": ingredientsController.text,
         "steps": stepsController.text,
         "hastags": hastagController.text,
-        "email":email
+        "email": email
       });
       debugPrint(formData.fields.asMap().toString());
       var response;
@@ -343,23 +362,23 @@ class myProvider with ChangeNotifier {
       response = await dio.post(baseURL + "/upload-recipe",
           data: formData,
           onSendProgress: (count, total) {
-            progress=count;
+            progress = count / total;
+            notifyListeners();
             debugPrint(
                 "count: " + count.toString() + " total: " + total.toString());
           },
           queryParameters: {"query": "test"},
           options: Dio.Options(
             validateStatus: (status) {
-              if (status!.isEven) {
-                debugPrint("status: " + status.toString());
+              if (status == 200) {
+                debugPrint("success: " + status.toString());
                 return true;
               } else {
                 return false;
               }
             },
           ));
-      final responseData =
-          response.data;
+      final responseData = response.data;
 
       if (responseData['statusCode'] == 200) {
         showmessage(responseData['message']);
@@ -371,6 +390,18 @@ class myProvider with ChangeNotifier {
       debugPrint("Exception occured : " + e.toString());
     }
     image.clear();
+    progress = 0;
+    titlecontroller.clear();
+    descriptionController.clear();
+    hastagController.clear();
+    stepsController.clear();
+    ingredientsController.clear();
+    titlenode.unfocus();
+    descriptionNode.unfocus();
+    stepsNode.unfocus();
+    ingredientsNode.unfocus();
+    hastagnode.unfocus();
+    Navigator.pop(context);
   }
 
   void deleteSelectedImage(int index) {
@@ -405,11 +436,40 @@ class myProvider with ChangeNotifier {
       debugPrint("exception occured : " + e.toString());
       showmessage("exception occured : " + e.toString(), bgColor: Colors.red);
     }
+    bool isReact = isAlreadyReact(20, 29);
+    debugPrint("isReact : " + isReact.toString());
     notifyListeners();
   }
 
   void toggleLoading() {
     isLoading = false;
     notifyListeners();
+  }
+
+  bool isAlreadyReact(int userId, int recipeId) {
+    for (var item in _items) {
+      for (var userReaction in item.reaction!) {
+        final user = userReaction.user;
+        if (userId == user.pk && recipeId == userReaction.recipeId) {
+          debugPrint("User $userId has reacted to recipe $recipeId");
+          return true;
+        }
+      }
+    }
+    debugPrint("User $userId has not reacted to recipe $recipeId");
+    return false;
+  }
+
+  void handleReactChangeUi(int id, bool up) {
+    for (var data in _items) {
+      if (data.pk == id) {
+        if (up){
+          data.totalReact++;
+        }
+        else
+          data.totalReact--;
+          notifyListeners();
+      }
+    }
   }
 }

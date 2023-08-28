@@ -37,7 +37,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 shape: RoundedRectangleBorder(),
                 child: TextFormField(
                   onFieldSubmitted: (value) {
-                    provider.searchItem();
+                    provider.clearField();
+                  },
+                  onChanged: (value) {
+                    provider.searchRecipe(value);
                   },
                   controller: provider.searchController,
                   decoration: InputDecoration(

@@ -10,6 +10,7 @@ class User(models.Model):
     password = models.CharField(max_length=30)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+    image=models.ImageField(upload_to="profile-image/",null=True, blank=True,max_length=100)
     def __str__(self):
         return self.email
 
@@ -46,5 +47,7 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     comment = models.CharField(max_length=150)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, null=True, blank=True, on_delete=models.CASCADE)
+
     def __str__(self):
         return self.recipe.title

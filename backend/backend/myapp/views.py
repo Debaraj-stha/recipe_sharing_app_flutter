@@ -1,15 +1,13 @@
-from django.shortcuts import render, HttpResponse
-from myapp.models import User, Recipe, RecipeMedia
+from myapp.models import User, Recipe, RecipeMedia, Reaction, Comment
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
-import os
+
 from django.conf import settings
-from django.core import serializers
-from django.db.models import Count, F
+
 from django.core.mail import send_mail
 from random import randint
-from django.utils import timezone
-from datetime import timedelta
+
+
 # Create your views here.
 @api_view(["POST"])
 def signup(request):
@@ -33,7 +31,12 @@ def signup(request):
                         "success": True,
                         "statusCode": 200,
                         "message": "Signup successfully",
-                        "user": {"name": name, "email": email, "image": "","pk":user.pk},
+                        "user": {
+                            "name": name,
+                            "email": email,
+                            "image": "",
+                            "pk": user.pk,
+                        },
                     }
                 )
             else:
@@ -57,7 +60,12 @@ def login(request):
             {
                 "success": True,
                 "statusCode": 200,
-                "user": {"name": user[0].name, "email": user[0].email, "image": "","pk":user[0].pk},
+                "user": {
+                    "name": user[0].name,
+                    "email": user[0].email,
+                    "image": "",
+                    "pk": user[0].pk,
+                },
                 "message": "Login successfully",
             }
         )
@@ -95,7 +103,7 @@ def uploadRecipe(request):
     try:
         data = request.data
         email = data.get("email")
-        image=data.get("image")
+        image = data.get("image")
         print("image")
         print(image)
         # uploadForm = uploadRecipeForm(request.POST, request.FILES)
@@ -153,9 +161,78 @@ def uploadRecipe(request):
 
 @api_view(["GET"])
 def getRecipe(request):
-    recipes = Recipe.objects.all()
+    recipes = Recipe.objects.all().order_by("created_at")
     recipe_data = []
-    now=timezone.now()
+
+    for recipe in recipes:
+        media = RecipeMedia.objects.filter(recipe=recipe)
+        comment = Comment.objects.filter(recipe=recipe)
+        reaction=Reaction.objects.filter(recipe=recipe)
+        mycomment = []
+        reaction_data=[]
+        for r in reaction:
+            reaction_data.append({
+                 "user": {
+                    "name": r.reacter.name,
+                    "email": r.reacter.email,
+                    "pk":r.reacter.pk,
+                    "image": str(r.reacter.image)
+                },
+                 "id":r.pk,
+                 "created_at": r.created_at,
+                 "recipeId":r.recipe.pk
+                 
+                 
+            })
+        for c in comment:
+            mycomment.append({
+                "comment": c.comment,
+                "id": c.pk,
+                "created_at": c.created_at,
+                "user": {
+                    "name": c.user.name,
+                    "email": c.user.email,
+                    "pk": c.user.pk,
+                    "image": str(c.user.image)
+                }
+            })
+
+        media_filenames = [str(item.media) for item in media]
+        myRecipe = {
+            "reaction":reaction_data,
+            "comment": mycomment,
+            "totalReact":reaction.count(),
+            "totalComment":comment.count(),
+            "totalShare":0,
+            "image": media_filenames,
+            "title": recipe.title,
+            "description": recipe.description,
+            "steps": recipe.steps,
+            "ingredients": recipe.ingredients,
+            "hastags": recipe.hastags,
+            "id": recipe.pk,
+            "addedAt": recipe.created_at,
+            "user": {
+                "name": recipe.user.name,
+                "pk": recipe.user.pk,
+                "email": recipe.user.email,
+                "image": "",
+            },
+        }
+        recipe_data.append(myRecipe)
+
+    return JsonResponse({"statusCode": 200, "recipe": recipe_data})
+
+
+
+@api_view(["GET"])
+def searchRecipe(request):
+    q = request.GET.get("q")
+    print("q " + str(q))
+    recipes = Recipe.objects.filter(title__icontains=q).order_by("created_at")
+
+    recipe_data = []
+
     for recipe in recipes:
         media = RecipeMedia.objects.filter(recipe=recipe)
         media_filenames = [str(item.media) for item in media]
@@ -166,15 +243,89 @@ def getRecipe(request):
             "steps": recipe.steps,
             "ingredients": recipe.ingredients,
             "hastags": recipe.hastags,
-            "id":recipe.pk,
+            "id": recipe.pk,
             "created_at": recipe.created_at,
-            "user":{
-                "name":recipe.user.name,
+            "user": {
+                "name": recipe.user.name,
                 "pk": recipe.user.pk,
                 "email": recipe.user.email,
-                "image":""
-            }
+                "image": "",
+            },
         }
         recipe_data.append(myRecipe)
 
     return JsonResponse({"statusCode": 200, "recipe": recipe_data})
+
+
+@api_view(["POST"])
+def likeRecipe(request):
+    data = request.data
+    print(data)
+    recipeId = data.get("recipeId")
+    reactorId = data.get("reactorId")
+    reactor = User.objects.filter(
+        pk=reactorId
+    ).first() 
+    recipe = Recipe.objects.filter(
+        pk=recipeId
+    ).first() 
+
+    if recipe is not None:
+        if reactor is not None:
+            isAlreadyReact = Reaction.objects.filter(
+                reacter=reactor, recipe=recipe
+            )
+            if isAlreadyReact.exists():
+                isAlreadyReact.delete()
+                return JsonResponse(
+                    {
+                        "status": "fail",
+                        "statusCode": 400,
+                        "message": "Already reacted by this user to this recipe",
+                    }
+                )
+
+            reaction = Reaction(recipe=recipe, reacter=reactor)
+            reaction.save()
+
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "statusCode": 200,
+                    "message": "React saved successfully",
+                }
+            )
+        else:
+            return JsonResponse(
+                {"status": "fail", "statusCode": 404, "message": "User not found"}
+            )
+    else:
+        return JsonResponse(
+            {"status": "fail", "statusCode": 404, "message": "Recipe not found"}
+        )
+
+
+@api_view(["POST"])
+def commentRecipe(request):
+    data = request.data
+    comment = data.get("comment")
+    recipeId = data.get("recipeId")
+    userId = data.get("userId")
+    user = User.objects.filter(pk=userId).first()
+    recipe = Recipe.objects.filter(pk=recipeId).first()
+    if user is not None:
+        if recipe is not None:
+            commentRecipe = Comment(comment=comment, user=user, recipe=recipe)
+            commentRecipe.save()
+            if commentRecipe.save:
+                return JsonResponse(
+                    {"statusCode": 200, "message": "Commnent post successfully"}
+                )
+            else:
+                return JsonResponse(
+                    {"statusCode": 400, "message": "Commnent is not post successfully"}
+                )
+        else:
+            return JsonResponse({"statusCode": 404, "message": "Recipe not found"})
+    else:
+        return JsonResponse({"statusCode": 404, "message": "User not found"})

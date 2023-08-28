@@ -19,8 +19,23 @@ class addRecipePage extends StatefulWidget {
   State<addRecipePage> createState() => _addRecipePageState();
 }
 
-class _addRecipePageState extends State<addRecipePage> {
+class _addRecipePageState extends State<addRecipePage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
   @override
+  void initState() {
+    // TODO: implement initState
+    _controller = AnimationController(vsync: this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _controller.dispose();
+    super.dispose();
+  }
+
   Widget build(BuildContext context) {
     final provider = Provider.of<myProvider>(context, listen: false);
     return Scaffold(
@@ -115,7 +130,7 @@ class _addRecipePageState extends State<addRecipePage> {
               //   primary: constraints.primaryColor
               // ),
               onPressed: () {
-            provider.postRecipe();
+            provider.postRecipe(context);
           }, child: Consumer<myProvider>(
             builder: (context, value, child) {
               return value.progress == 0
@@ -126,6 +141,12 @@ class _addRecipePageState extends State<addRecipePage> {
                     )
                   : LinearProgressIndicator(
                       value: value.progress.toDouble(),
+                      minHeight: 10,
+                      color: Colors.grey,
+                      valueColor: _controller.drive(ColorTween(
+                        begin: Colors.green, // Starting color
+                        end: Colors.blue, // Ending color
+                      )),
                     );
             },
           ))

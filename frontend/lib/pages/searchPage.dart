@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
+import 'package:frontend/pages/singleRecipePage.dart';
 import 'package:frontend/provider/myProvider.dart';
 import 'package:frontend/utils/appBar.dart';
 import 'package:frontend/utils/smalltext.dart';
@@ -23,35 +24,41 @@ class _searchPageState extends State<searchPage> {
         isShowSearchField: true,
       ),
       body: Consumer<myProvider>(builder: (context, value, child) {
-        if (value.searchController.value != "") {
+        if (value.searchItems.isNotEmpty && value.searchItems.length!=0) {
           return ListView.builder(
-              itemCount: 10,
+              itemCount: value.searchItems.length,
               padding: EdgeInsets.all(10),
               itemBuilder: (context, index) {
-                return Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                      
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 20,
-                              child: Icon(Icons.person),
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            smalltext(text: "Creater ${index}")
-                          ],
+                final data=value.searchItems[index];
+                return InkWell(
+                  onTap: (){
+                    // Navigator.push(context, MaterialPageRoute(builder: (context)=>singleRecipePage(user: user, description: description, addedAt: addedAt, media: media)))
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                        
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                child: Icon(Icons.person),
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              smalltext(text: data.title)
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    Divider(thickness: 1,)
-                  ],
+                      Divider(thickness: 1,)
+                    ],
+                  ),
                 );
               });
         } else {
