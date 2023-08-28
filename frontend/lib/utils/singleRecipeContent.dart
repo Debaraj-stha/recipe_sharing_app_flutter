@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
+import 'package:frontend/utils/commentButtonSheet.dart';
 import 'package:frontend/utils/mediumtext.dart';
 import 'package:frontend/utils/smalltext.dart';
 import 'package:intl/intl.dart';
@@ -186,6 +187,23 @@ class _singleRecipeContentState extends State<singleRecipeContent>
                                 .getShareReactionCount(
                                     widget.data.pk.toString())
                                 .toString(),
+                            color: constraints.colorWhite,
+                            weight: FontWeight.w700,
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          InkWell(
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>commentPage()));
+                              },
+                              child: Icon(
+                                Icons.comment,
+                                color: constraints.colorWhite,
+                                size: 30,
+                              )),
+                          smalltext(
+                            text: "10",
                             color: constraints.colorWhite,
                             weight: FontWeight.w700,
                           ),
