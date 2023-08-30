@@ -10,6 +10,8 @@ import 'package:frontend/utils/smalltext.dart';
 
 import 'package:provider/provider.dart';
 
+import 'demo.dart';
+
 class homePageContent extends StatefulWidget {
   const homePageContent({super.key});
 
@@ -35,8 +37,9 @@ class _homePageContentState extends State<homePageContent> {
           itemBuilder: (context, index) {
             final data = value.items[index]; // Remove [0] here
 
-            return singleRecipeContent(
-                data: data, currentImagePage: value.currentImagePage);
+            return demo(data: data,currentImagePage: value.currentImagePage);
+            //  singleRecipeContent(
+            //     data: data, currentImagePage: value.currentImagePage);
           },
         );
       },

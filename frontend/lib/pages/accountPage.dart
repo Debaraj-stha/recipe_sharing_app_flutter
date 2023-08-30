@@ -1,11 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/src/animation/animation_controller.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/src/widgets/ticker_provider.dart';
 import 'package:frontend/controller/constraints.dart';
+import 'package:frontend/provider/myProvider.dart';
 import 'package:frontend/utils/appBar.dart';
+import 'package:frontend/utils/buildImagePicker.dart';
 import 'package:frontend/utils/smalltext.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class accountPage extends StatefulWidget {
   const accountPage({super.key});
@@ -34,62 +40,87 @@ class _accountPageState extends State<accountPage>
 
   @override
   Widget build(BuildContext context) {
+        final provider = Provider.of<myProvider>(context, listen: false);
+
     return Scaffold(
       appBar: const CustomAppBar(title: "Account"),
       body: ListView(
         padding: EdgeInsets.all(10),
         children: [
-          Row(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: constraints.secondaryColor,
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundColor: constraints.colorBlack,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0, // Adjust the positioning as needed
-                    right: 0, // Adjust the positioning as needed
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: constraints.colorGrey,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
+          Consumer<myProvider>(builder: (context, value, child) {
+            return Row(
+              children: [
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 35,
+                      child: CircleAvatar(
+                        radius: 32,
+                        backgroundColor: constraints.secondaryColor,
+                        backgroundImage: value.profile != null
+                            ? FileImage(File(value.profile!.path))
+                            : null,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  smalltext(
-                    text: "Mina Ghimire",
-                    weight: FontWeight.bold,
-                  ),
-                  smalltext(
-                    text: "deepaghimire@gmail.com",
-                    weight: FontWeight.bold,
-                  )
-                ],
-              ),
-            ],
-          ),
+                    Positioned(
+                      bottom: 0, // Adjust the positioning as needed
+                      right: 0, // Adjust the positioning as needed
+                      child: InkWell(
+                        onTap: () {
+                          showButtonSheet(context);
+                        },
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: constraints.colorGrey,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    smalltext(
+                      text: "Mina Ghimire",
+                      weight: FontWeight.bold,
+                    ),
+                    smalltext(
+                      text: "deepaghimire@gmail.com",
+                      weight: FontWeight.bold,
+                    ),
+                    value.profile!=null?
+                    InkWell(
+                      child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                      padding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: constraints.primaryColor,
+                          borderRadius: BorderRadius.circular(5)
+                        ),
+                        child: smalltext(text: "Update",color: constraints.colorWhite,)),
+                      onTap: () {
+                        provider.changeProfile(20);
+                      },
+                    ):Container()
+                  ],
+                ),
+              ],
+            );
+          }),
           ExpansionTile(
             // iconColor: constraints.primaryColor,
             // collapsedIconColor: constraints.primaryColor,
             tilePadding: EdgeInsets.zero,
             leading: Icon(Icons.account_circle),
-            title: smalltext(text: "Account Settings",weight:FontWeight.bold),
+            title: smalltext(text: "Account Settings", weight: FontWeight.bold),
             children: [
               buildList(Icons.key, "Change Profile Picture", demo),
               buildList(Icons.edit, "Edit your details", demo)
@@ -98,7 +129,8 @@ class _accountPageState extends State<accountPage>
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
             leading: Icon(Icons.manage_accounts),
-            title: smalltext(text: "Recipe Management",weight:FontWeight.bold),
+            title:
+                smalltext(text: "Recipe Management", weight: FontWeight.bold),
             children: [
               buildList(Icons.list, "Your recipe", demo),
               buildList(Icons.edit_attributes, "Edit your recipe", demo)
@@ -107,7 +139,7 @@ class _accountPageState extends State<accountPage>
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
             leading: Icon(Icons.bookmark_added),
-            title: smalltext(text: "Saved Recipe",weight:FontWeight.bold),
+            title: smalltext(text: "Saved Recipe", weight: FontWeight.bold),
             children: [
               buildList(Icons.bookmark_add, "Saved recipes", demo),
               buildList(Icons.delete_forever, "Remove save recipe", demo)
@@ -116,7 +148,8 @@ class _accountPageState extends State<accountPage>
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
             leading: Icon(Icons.people),
-            title: smalltext(text: "Followers and Followings",weight:FontWeight.bold),
+            title: smalltext(
+                text: "Followers and Followings", weight: FontWeight.bold),
             children: [
               buildList(Icons.person_add, "Follower", demo),
               buildList(Icons.people, "Following", demo)
@@ -125,7 +158,7 @@ class _accountPageState extends State<accountPage>
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
             leading: Icon(Icons.delete_forever_outlined),
-            title: smalltext(text: "Account Deletion",weight:FontWeight.bold),
+            title: smalltext(text: "Account Deletion", weight: FontWeight.bold),
             children: [
               buildList(Icons.person_add, "Delete this account", demo),
             ],
@@ -133,7 +166,7 @@ class _accountPageState extends State<accountPage>
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
             leading: Icon(Icons.settings),
-            title: smalltext(text: "Settiongs",weight:FontWeight.bold),
+            title: smalltext(text: "Settiongs", weight: FontWeight.bold),
             children: [
               buildList(Icons.palette, "Chnage app theme", demo),
               buildList(Icons.language, "Chnage Language", demo),
@@ -159,9 +192,40 @@ class _accountPageState extends State<accountPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [Icon(icon), smalltext(text: title,weight: FontWeight.bold,),],
+          children: [
+            Icon(icon),
+            smalltext(
+              text: title,
+              weight: FontWeight.bold,
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future showButtonSheet(BuildContext context) {
+    return showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 200,
+            width: constraints().getDeviceWidth(context),
+            child: Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildImagePicker("Pick From Gallery",
+                      constraints.secondaryColor, 1, context,
+                      isProfile: true),
+                  buildImagePicker(
+                      "Pick From Camera", constraints.primaryColor, 2, context,
+                      isProfile: true)
+                ],
+              ),
+            ),
+          );
+        });
   }
 }

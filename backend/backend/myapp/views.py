@@ -1,4 +1,4 @@
-from myapp.models import User, Recipe, RecipeMedia, Reaction, Comment
+from myapp.models import User, Recipe, RecipeMedia, Reaction, Comment,Share
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
 
@@ -6,7 +6,7 @@ from django.conf import settings
 
 from django.core.mail import send_mail
 from random import randint
-
+from django.core import serializers
 
 # Create your views here.
 @api_view(["POST"])
@@ -184,23 +184,11 @@ def getRecipe(request):
                  
                  
             })
-        for c in comment:
-            mycomment.append({
-                "comment": c.comment,
-                "id": c.pk,
-                "created_at": c.created_at,
-                "user": {
-                    "name": c.user.name,
-                    "email": c.user.email,
-                    "pk": c.user.pk,
-                    "image": str(c.user.image)
-                }
-            })
-
+       
         media_filenames = [str(item.media) for item in media]
         myRecipe = {
+            "isShare":False,
             "reaction":reaction_data,
-            "comment": mycomment,
             "totalReact":reaction.count(),
             "totalComment":comment.count(),
             "totalShare":0,
@@ -209,7 +197,7 @@ def getRecipe(request):
             "description": recipe.description,
             "steps": recipe.steps,
             "ingredients": recipe.ingredients,
-            "hastags": recipe.hastags,
+            "hashtags": recipe.hastags,
             "id": recipe.pk,
             "addedAt": recipe.created_at,
             "user": {
@@ -220,8 +208,9 @@ def getRecipe(request):
             },
         }
         recipe_data.append(myRecipe)
-
-    return JsonResponse({"statusCode": 200, "recipe": recipe_data})
+        shareData=getShare()
+        shareData.extend(recipe_data)
+    return JsonResponse({"statusCode": 200, "recipe": shareData})
 
 
 
@@ -253,7 +242,7 @@ def searchRecipe(request):
             },
         }
         recipe_data.append(myRecipe)
-
+        
     return JsonResponse({"statusCode": 200, "recipe": recipe_data})
 
 
@@ -318,9 +307,24 @@ def commentRecipe(request):
             commentRecipe = Comment(comment=comment, user=user, recipe=recipe)
             commentRecipe.save()
             if commentRecipe.save:
+                lastComment={
+                    "user":{
+                    "name":commentRecipe.user.name,
+                    "email":commentRecipe.user.email,
+                    "pk":commentRecipe.user.pk,
+                    "image": str(commentRecipe.user.image)
+                    
+                },
+                "comment":commentRecipe.comment,
+                "id":commentRecipe.pk,
+                "created_at":commentRecipe.created_at
+                }
+               
+                print(lastComment)
                 return JsonResponse(
-                    {"statusCode": 200, "message": "Commnent post successfully"}
+                    {"statusCode": 200, "message": "Commnent post successfully","comment": lastComment}
                 )
+                
             else:
                 return JsonResponse(
                     {"statusCode": 400, "message": "Commnent is not post successfully"}
@@ -329,3 +333,113 @@ def commentRecipe(request):
             return JsonResponse({"statusCode": 404, "message": "Recipe not found"})
     else:
         return JsonResponse({"statusCode": 404, "message": "User not found"})
+
+@api_view(['GET'])
+def loadComment(request):
+    pk=request.GET.get('pk')
+    recipe=Recipe.objects.filter(pk=pk).first()
+    print(recipe)
+    comments=Comment.objects.filter(recipe=recipe)
+    if comments.exists():
+        commentList=[]
+        for comment in comments:
+            commentList.append({
+                "user":{
+                    "name":comment.user.name,
+                    "email":comment.user.email,
+                    "pk":comment.user.pk,
+                    "image": str(comment.user.image)
+                    
+                },
+                "comment":comment.comment,
+                "id":comment.pk,
+                "created_at":comment.created_at
+            })
+        
+        return JsonResponse({"statusCode":200,"message":"success","comments":commentList})
+    else:
+        return JsonResponse({"statusCode": 404, "message":"No commnent yet"})
+@api_view(['POST'])
+def changeProfile(request):
+    data=request.data
+    image=data.get('image')
+    userId=data.get('userId')
+    user=User.objects.filter(pk=userId).first()
+    if user is not None:
+        user.image=image
+        user.save()
+        if user.save:
+            return JsonResponse({"statusCode":200,"message":"profile updated successfully"})
+        else:
+            return JsonResponse({"statusCode":400,"message":"something went wrong"})
+    else:
+        return JsonResponse({"statusCode":404,"message":"user not found"})
+@api_view(['POST'])
+def shareRecipe(request):
+    data=request.data
+    userId=data.get('userId')
+    print(userId)
+    recipeId=data.get('recipeId')
+    title=data.get('title')
+    user=User.objects.filter(pk=userId).first()
+    recipe=Recipe.objects.filter(pk=recipeId).first()
+    print(user.name)
+    
+    print(recipe)
+    if user is not None and recipe is not None:
+        recipeOwnerPk=recipe.user.pk
+        print(recipeOwnerPk)
+        recipeOwner=User.objects.filter(pk=recipeOwnerPk).first()
+        print(recipeOwner)
+        share=Share(recipe=recipe,recipeOwner=recipeOwner,title=title,user=user)
+        share.save()
+        shareId=Recipe(title=title,shareId=share,user=user)
+        shareId.save()
+        if share.save:
+            return JsonResponse({'message':"resipe is shared succcessfully","statusCode":200})
+    else:
+        return JsonResponse({"statusCode":404,"message":"Either user or recipe is invalid"})
+
+
+def getShare():
+    share=Share.objects.all()
+    shareList=[]
+    for s in share:
+        shareRecipe=Recipe.objects.filter(pk=s.pk).first()
+        comment=Comment.objects.filter(recipe=shareRecipe)
+        reaction=Reaction.objects.filter(recipe=shareRecipe)
+        media = RecipeMedia.objects.filter(recipe=shareRecipe)
+        media_filenames = [str(item.media) for item in media]
+        shareList.append({
+             "reaction":[],
+            "image":media_filenames,
+            "isShare":True,
+            "totalReact":reaction.count(),
+            "totalComment":comment.count(),
+            "sharetitle":s.title,
+            "title":s.recipe.title,
+            "description":s. recipe.description,
+            "steps":s. recipe.steps,
+            "ingredients":s. recipe.ingredients,
+            "hashtags":s. recipe.hastags,
+            "id":s. recipe.pk,
+            "addedAt":s. recipe.created_at,
+            "user": {
+                "name":s.user.name,
+                "pk":s.user.pk,
+                "email":s.user.email,
+                "image": "",
+            },
+            "owner":{
+                 "name":s.recipeOwner.name,
+                "pk":s. recipeOwner.pk,
+                "email":s. recipeOwner.email,
+                "image": "",
+            }
+        })
+    return shareList
+def getUser():
+    user=User.objects.all()
+    users=serializers.serialize('json',user)
+    print(users)
+getUser()

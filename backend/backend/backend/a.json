@@ -1,0 +1,141 @@
+{
+    "statusCode": 200,
+    "recipe": [
+        {
+            "reaction": [],
+            "totalReact": 0,
+            "totalComment": 0,
+            "totalShare": 0,
+            "image": [],
+            "title": "title",
+            "description": "",
+            "steps": [],
+            "ingredients": [],
+            "hastags": [],
+            "id": 6,
+            "addedAt": "2023-08-29T11:33:17.744Z",
+            "user": {
+                "name": "devraj shrestha",
+                "pk": 1,
+                "email": "dstha221@gmail.com",
+                "image": ""
+            }
+        },
+        {
+            "isShare": true,
+            "totalReact": 0,
+            "totalComment": 0,
+            "title": "shared title",
+            "description": "",
+            "steps": [],
+            "ingredients": [],
+            "hastags": [],
+            "id": 6,
+            "created_at": "2023-08-29T11:33:17.744Z",
+            "user": {
+                "name": "jeevan shrestha",
+                "pk": 2,
+                "email": "devrajstha88@gmail.com",
+                "image": ""
+            },
+            "owner": {
+                "name": "devraj shrestha",
+                "pk": 1,
+                "email": "dstha221@gmail.com",
+                "image": ""
+            }
+        },
+        {
+            "isShare": true,
+            "totalReact": 0,
+            "totalComment": 0,
+            "title": "sharrv",
+            "description": "aadf",
+            "steps": [],
+            "ingredients": [],
+            "hastags": [],
+            "id": 7,
+            "created_at": "2023-08-29T11:33:28.322Z",
+            "user": {
+                "name": "devraj shrestha",
+                "pk": 1,
+                "email": "dstha221@gmail.com",
+                "image": ""
+            },
+            "owner": {
+                "name": "jeevan shrestha",
+                "pk": 2,
+                "email": "devrajstha88@gmail.com",
+                "image": ""
+            }
+        },
+        {
+            "reaction": [],
+            "totalReact": 0,
+            "totalComment": 0,
+            "totalShare": 0,
+            "image": [],
+            "title": "aaa",
+            "description": "aadf",
+            "steps": [],
+            "ingredients": [],
+            "hastags": [],
+            "id": 7,
+            "addedAt": "2023-08-29T11:33:28.322Z",
+            "user": {
+                "name": "devraj shrestha",
+                "pk": 1,
+                "email": "dstha221@gmail.com",
+                "image": ""
+            }
+        },
+        {
+            "isShare": true,
+            "totalReact": 0,
+            "totalComment": 0,
+            "title": "shared title",
+            "description": "",
+            "steps": [],
+            "ingredients": [],
+            "hastags": [],
+            "id": 6,
+            "created_at": "2023-08-29T11:33:17.744Z",
+            "user": {
+                "name": "jeevan shrestha",
+                "pk": 2,
+                "email": "devrajstha88@gmail.com",
+                "image": ""
+            },
+            "owner": {
+                "name": "devraj shrestha",
+                "pk": 1,
+                "email": "dstha221@gmail.com",
+                "image": ""
+            }
+        },
+        {
+            "isShare": true,
+            "totalReact": 0,
+            "totalComment": 0,
+            "title": "sharrv",
+            "description": "aadf",
+            "steps": [],
+            "ingredients": [],
+            "hastags": [],
+            "id": 7,
+            "created_at": "2023-08-29T11:33:28.322Z",
+            "user": {
+                "name": "devraj shrestha",
+                "pk": 1,
+                "email": "dstha221@gmail.com",
+                "image": ""
+            },
+            "owner": {
+                "name": "jeevan shrestha",
+                "pk": 2,
+                "email": "devrajstha88@gmail.com",
+                "image": ""
+            }
+        }
+    ]
+}

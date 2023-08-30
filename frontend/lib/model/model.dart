@@ -25,9 +25,9 @@ class RecipeItem {
    List<String> image;
    String title;
    String description;
-   List<String> steps;
-   List<String> ingredients;
-   List<String> hashtags;
+   List<String>? steps;
+   List<String>? ingredients;
+   List<String>? hashtags;
    int pk;
    User user;
   DateTime addedAt;
@@ -35,44 +35,52 @@ class RecipeItem {
    int totalComment;
    int? totalShare;
    List<React>? reaction;
-   List<Comment>? comment;
+  bool isShare;
+  String?sharetitle;
+  User?owner;
   RecipeItem(
       {
+        required this.isShare,
+        this.sharetitle,
+        this.owner,
         required this.totalComment,
       required this.totalReact,
-      this.comment,
+      
       this.reaction,
       this.totalShare,
       required this.image,
       required this.title,
       required this.description,
-      required this.steps,
-      required this.ingredients,
-      required this.hashtags,
+       this.steps,
+       this.ingredients,
+       this.hashtags,
       required this.pk,
       required this.user,
       required this.addedAt
       });
   factory RecipeItem.fromJson(Map<String, dynamic> json) {
-    return RecipeItem(
-      reaction:
-          List<React>.from(json["reaction"].map((x) => React.fromJson(x))),
-      comment:
-          List<Comment>.from(json['comment'].map((x) => Comment.fromJson(x))),
-      pk: json["id"],
-      totalComment: json['totalComment'],
-      totalReact: json['totalReact'],
-      totalShare: json['totalShare'],
-      addedAt: DateTime.parse(json['addedAt']),
-      user: User.fromJson(json['user']),
-      image: List<String>.from(json['image']),
-      title: json['title'],
-      description: json['description'],
-      steps: List<String>.from(json['steps']),
-      ingredients: List<String>.from(json['ingredients']),
-      hashtags: List<String>.from(json['hastags']),
-    );
-  }
+  return RecipeItem(
+    isShare: json["isShare"],
+    sharetitle: json["sharetitle"],
+    owner: json["owner"] != null ? User.fromJson(json["owner"]) : null,
+    reaction: json["reaction"] != null
+        ? List<React>.from(json["reaction"].map((x) => React.fromJson(x)))
+        : null,
+    pk: json["id"],
+    totalComment: json['totalComment'],
+    totalReact: json['totalReact'],
+    totalShare: json['totalShare'],
+    addedAt: DateTime.parse(json['addedAt']),
+    user: User.fromJson(json['user']),
+    image: List<String>.from(json['image']),
+    title: json['title'],
+    description: json['description'],
+    steps: List<String>.from(json['steps']),
+    ingredients: List<String>.from(json['ingredients']),
+    hashtags: List<String>.from(json['hashtags']),
+  );
+}
+
 }
 
 class Search {

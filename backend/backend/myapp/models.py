@@ -11,43 +11,54 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     image=models.ImageField(upload_to="profile-image/",null=True, blank=True,max_length=100)
-    def __str__(self):
-        return self.email
+    
+    def __str__(self) -> str:
+        return  self.name
+
+
 
 class Recipe(models.Model):
-    title = models.CharField(max_length=150, null=True)
-    description = models.TextField()
+    title = models.CharField(max_length=150, null=True,blank=True)
+    description = models.TextField(null=True, blank=True,)
     steps = ArrayField(base_field=models.CharField(max_length=250), blank=True, null=True, default=list)
     ingredients = ArrayField(base_field=models.CharField(max_length=100), blank=True, null=True, default=list)
     hastags = ArrayField(base_field=models.CharField(max_length=50), blank=True, null=True, default=list)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    shareId = models.ForeignKey('Share', null=True, blank=True, on_delete=models.CASCADE, related_name='shared_recipes')  # Updated related_name
+
+class Share(models.Model):
+    title=models.CharField(max_length=150,null=True,blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='shared_user')
+    recipe = models.ForeignKey(Recipe, null=True, blank=True, on_delete=models.CASCADE)
+    recipeOwner = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='shared_recipe_owner')
+
     
-    def __str__(self):
-        return self.title
 
     
     
 class RecipeMedia(models.Model):
     media = models.ImageField(upload_to="post-image/", max_length=100,null=True,blank=True)
     recipe = models.ForeignKey(Recipe, null=True, blank=True, on_delete=models.CASCADE)
-    def __str__(self):
-        return self.recipe.title
+    
+    # def __str__(self):
+    #     return self.recipe.title
 
 class Reaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     reacter = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
-
+    share=models.ForeignKey(Share, null=True, blank=True, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, null=True, blank=True, on_delete=models.CASCADE)
-    def __str__(self):
-        return self.recipe.title
+    
 
 class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
-    comment = models.CharField(max_length=150)
+    comment = models.TextField()
+    share=models.ForeignKey(Share, null=True, blank=True, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, null=True, blank=True, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.recipe.title
+   
+
+

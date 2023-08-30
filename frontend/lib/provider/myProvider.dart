@@ -47,6 +47,9 @@ class myProvider with ChangeNotifier {
   List<XFile>? imageFile;
   bool hasimages = false;
   String message = "";
+  TextEditingController textEditingController = TextEditingController();
+  FocusNode focusNode = FocusNode();
+  XFile? profile;
   RegExp passwordRegex = RegExp(
     r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$',
   );
@@ -64,6 +67,8 @@ class myProvider with ChangeNotifier {
   double progress = 0;
   List<RecipeItem> _searchItems = [];
   List<RecipeItem> get searchItems => _searchItems;
+  List<Comment> _comments = [];
+  List<Comment> get comments => _comments;
   void initialize() {
     pageController = PageController();
     nameController = TextEditingController();
@@ -113,6 +118,8 @@ class myProvider with ChangeNotifier {
     hastagController.dispose();
     ingredientsController.dispose();
     stepsController.dispose();
+    textEditingController.dispose();
+    focusNode.dispose();
   }
 
   void setCurrentPage(int val) {
@@ -244,15 +251,15 @@ class myProvider with ChangeNotifier {
     }
   }
 
-  void likeRecipie(String id, AnimationController controller) async {
+  void likeRecipie(String id,String userId, AnimationController controller) async {
     debugPrint("id = " + id);
     try {
       final response = await http.post(Uri.parse(baseURL + "/like-recipe"),
-          body: {"reactorId": "20", "recipeId": id});
+          body: {"reactorId": userId, "recipeId": id});
       final data = jsonDecode(response.body);
       if (data['statusCode'] != 200) {
         showmessage(data['message'], bgColor: Colors.red);
-        if(data['statusCode'] ==400){
+        if (data['statusCode'] == 400) {
           controller.reverse();
         }
         handleReactChangeUi(int.parse(id), false);
@@ -279,6 +286,7 @@ class myProvider with ChangeNotifier {
     } on Exception catch (e) {
       showmessage("Exception occured : " + e.toString());
     }
+    loadRecipe();
     notifyListeners();
   }
 
@@ -313,16 +321,20 @@ class myProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void pickImage(ImageSource s) async {
+  void pickImage(ImageSource s, {bool isProfile = false}) async {
     try {
       final ImagePicker picker = ImagePicker();
-      imageFile = (await picker.pickMultiImage())!;
-      if (imageFile!.isEmpty) {
-        showmessage("No image selected");
+      if (isProfile) {
+        profile = await picker.pickImage(source: s);
       } else {
-        handleImage();
-        hasimages = true;
-        debugPrint(imageFile.toString());
+        imageFile = (await picker.pickMultiImage())!;
+        if (imageFile!.isEmpty) {
+          showmessage("No image selected");
+        } else {
+          handleImage();
+          hasimages = true;
+          debugPrint(imageFile.toString());
+        }
       }
     } on Exception catch (e) {
       showmessage("Exception occured : " + e.toString());
@@ -421,10 +433,11 @@ class myProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final recipedata = data['recipe'];
-        debugPrint(recipedata.toString());
+   
         for (var item in recipedata) {
           _items.add(RecipeItem.fromJson(item));
         }
+        debugPrint(recipedata.toString());
         showmessage("Recipe loaded successfully");
         Future.delayed(Duration(seconds: 2), () {
           toggleLoading();
@@ -446,7 +459,10 @@ class myProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool isAlreadyReact(int userId, int recipeId) {
+  bool isAlreadyReact(
+    int userId,
+    int recipeId,
+  ) {
     for (var item in _items) {
       for (var userReaction in item.reaction!) {
         final user = userReaction.user;
@@ -463,13 +479,122 @@ class myProvider with ChangeNotifier {
   void handleReactChangeUi(int id, bool up) {
     for (var data in _items) {
       if (data.pk == id) {
-        if (up){
+        if (up) {
           data.totalReact++;
-        }
-        else
+        } else
           data.totalReact--;
-          notifyListeners();
+        notifyListeners();
       }
+    }
+  }
+
+  void loadComments(int pk) async {
+    _comments.clear();
+    final response = await http.get(Uri.parse(baseURL + "/loadComment?pk=$pk"));
+    final data = jsonDecode(response.body);
+    if (data['statusCode'] == 200) {
+      final comment = data['comments'];
+      for (var item in comment) {
+        _comments.add(Comment.fromJson(item));
+        showmessage(
+          data['message'],
+        );
+      }
+    }
+    if (data['statusCode'] == 404) {
+    } else {
+      showmessage("${data['message']}", bgColor: Colors.red);
+    }
+    notifyListeners();
+  }
+
+  Map<String, bool> showMoreMap = {};
+
+  bool isShowMore(String text) {
+    if (showMoreMap.containsKey(text)) {
+      return showMoreMap[text]!;
+    }
+    return text.length > 150;
+  }
+
+  void toggleShowMore(String text) {
+    if (showMoreMap.containsKey(text)) {
+      showMoreMap[text] = !showMoreMap[text]!;
+    } else {
+      showMoreMap[text] = false;
+    }
+    notifyListeners();
+  }
+
+  void postComment(int pk, int userId, ScrollController controller) async {
+    debugPrint(pk.toString());
+    final response =
+        await http.post(Uri.parse(baseURL + "/comment-recipe"), body: {
+      "recipeId": pk.toString(),
+      "userId": userId.toString(),
+      "comment": textEditingController.text
+    });
+    final data = jsonDecode(response.body);
+    if (data['statusCode'] == 200) {
+      showmessage(data['message']);
+      final lastComment = data['comment'];
+      _comments.add(Comment.fromJson(lastComment));
+      increaseCommentCount(pk);
+      if (controller.hasClients) {
+        controller.animateTo(
+          controller.position.maxScrollExtent + 70,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+      notifyListeners();
+      textEditingController.clear();
+    } else {
+      showmessage(data['message'], bgColor: Colors.red);
+    }
+    focusNode.unfocus();
+  }
+
+  void increaseCommentCount(int recipePk) {
+    for (var recipe in _items) {
+      if (recipe.pk == recipePk) {
+        recipe.totalComment += 1;
+        notifyListeners();
+      }
+    }
+  }
+
+  void changeProfile(int userId) async {
+    final file = await Dio.MultipartFile.fromFile(profile!.path,
+        filename: profile!.path);
+    Dio.FormData formData = await Dio.FormData.fromMap({
+      "image": file,
+      "userId": userId,
+    });
+    var response;
+    final dio = Dio.Dio();
+    response = await dio.post(baseURL + "/change-profile", data: formData);
+    if (response.data['statusCode'] == 200) {
+      showmessage("Profile changed successfully");
+    } else {
+      showmessage("Something went wrong.Please try again", bgColor: Colors.red);
+    }
+    profile = null;
+    notifyListeners();
+  }
+
+  void shareRecipe(int recipeId, int userId) async {
+    final response = await http.post(Uri.parse(baseURL + "/share-recipe"),
+        body: {
+          "recipeId": recipeId,
+          "userId": userId,
+          "title": "this is itle"
+        });
+    final data = await jsonDecode(response.body);
+    if (data['statusCode'] == 200) {
+      showmessage(data['messsage']);
+    } else {
+      showmessage(data['messsage'], bgColor: Colors.red);
     }
   }
 }

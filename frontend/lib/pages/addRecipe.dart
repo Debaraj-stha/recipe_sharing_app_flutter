@@ -6,6 +6,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
 import 'package:frontend/utils/appBar.dart';
+import 'package:frontend/utils/buildImagePicker.dart';
 import 'package:frontend/utils/smalltext.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -73,9 +74,9 @@ class _addRecipePageState extends State<addRecipePage>
                       ),
                       child: smalltext(text: "Add images")),
                   buildImagePicker(
-                      "Browse from Gallery", constraints.primaryColor, 1),
+                      "Browse from Gallery", constraints.primaryColor, 1,context,),
                   buildImagePicker(
-                      "Take from Camera", constraints.secondaryColor, 2),
+                      "Take from Camera", constraints.secondaryColor, 2,context),
                 ],
               );
             } else {
@@ -153,25 +154,7 @@ class _addRecipePageState extends State<addRecipePage>
         ]));
   }
 
-  Widget buildImagePicker(String text, Color color, int type) {
-    final provider = Provider.of<myProvider>(context, listen: false);
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      child: ElevatedButton(
-          style: ElevatedButton.styleFrom(primary: color),
-          onPressed: () {
-            if (type == 1) {
-              provider.pickImage(ImageSource.gallery);
-            } else {
-              provider.pickImage(ImageSource.camera);
-            }
-          },
-          child: smalltext(
-            text: text,
-            color: constraints.colorWhite,
-          )),
-    );
-  }
+  
 
   Widget buildInputField(int lines, String field,
       TextEditingController controller, FocusNode node, String helperText) {
