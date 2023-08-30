@@ -59,6 +59,7 @@ class Comment(models.Model):
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, null=True, blank=True, on_delete=models.CASCADE)
 
-   
-
+class Follow(models.Model):
+    follower=models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE,related_name="follower")
+    following=models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE,related_name="follo")
 

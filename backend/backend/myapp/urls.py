@@ -15,4 +15,6 @@ urlpatterns = [
     path("change-profile", views.changeProfile, name="change-profile"),
     path('share-recipe',views.shareRecipe, name="share-recipe"),
     path('get-share', views.getShare, name="get-share"),
+    path('get-user-recipe', views.getSpecificUserRecipe, name="get-user-recipe"),
+    path('follow-user', views.followUser, name="follow-user"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

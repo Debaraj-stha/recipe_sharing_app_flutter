@@ -1,4 +1,4 @@
-from myapp.models import User, Recipe, RecipeMedia, Reaction, Comment,Share
+from myapp.models import User, Recipe, RecipeMedia, Reaction, Comment,Share,Follow
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
 
@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from random import randint
 from django.core import serializers
 
-# Create your views here.
+# Create followingr views here.
 @api_view(["POST"])
 def signup(request):
     if request.method == "POST":
@@ -47,8 +47,6 @@ def signup(request):
                         "message": "Signup Failed.Please try again later",
                     }
                 )
-
-
 @api_view(["POST"])
 def login(request):
     data = request.data
@@ -77,8 +75,6 @@ def login(request):
                 "message": "Either email or password is invalid",
             }
         )
-
-
 @api_view(["POST"])
 def sendMail(request):
     mailto = request.data.get("mailto")
@@ -92,12 +88,6 @@ def sendMail(request):
     print(status)
     return JsonResponse({"status": status})
     # if status.
-
-
-def home(request):
-    return JsonResponse({"success": True, "statusCode": 200})
-
-
 @api_view(["POST"])
 def uploadRecipe(request):
     try:
@@ -157,8 +147,6 @@ def uploadRecipe(request):
             )
     except ValueError as e:
         return JsonResponse({"success": False, "statusCode": 400, "message": str(e)})
-
-
 @api_view(["GET"])
 def getRecipe(request):
     recipes = Recipe.objects.all().order_by("created_at")
@@ -211,9 +199,6 @@ def getRecipe(request):
         shareData=getShare()
         shareData.extend(recipe_data)
     return JsonResponse({"statusCode": 200, "recipe": shareData})
-
-
-
 @api_view(["GET"])
 def searchRecipe(request):
     q = request.GET.get("q")
@@ -244,8 +229,6 @@ def searchRecipe(request):
         recipe_data.append(myRecipe)
         
     return JsonResponse({"statusCode": 200, "recipe": recipe_data})
-
-
 @api_view(["POST"])
 def likeRecipe(request):
     data = request.data
@@ -294,8 +277,6 @@ def likeRecipe(request):
         return JsonResponse(
             {"status": "fail", "statusCode": 404, "message": "Recipe not found"}
         )
-
-
 @api_view(["POST"])
 def commentRecipe(request):
     data = request.data
@@ -335,7 +316,6 @@ def commentRecipe(request):
             return JsonResponse({"statusCode": 404, "message": "Recipe not found"})
     else:
         return JsonResponse({"statusCode": 404, "message": "User not found"})
-
 @api_view(['GET'])
 def loadComment(request):
     pk=request.GET.get('pk')
@@ -401,8 +381,6 @@ def shareRecipe(request):
             return JsonResponse({'message':"resipe is shared succcessfully","statusCode":200})
     else:
         return JsonResponse({"statusCode":404,"message":"Either user or recipe is invalid"})
-
-
 def getShare():
     share=Share.objects.all()
     shareList=[]
@@ -441,7 +419,20 @@ def getShare():
         })
     return shareList
 def getMyRecipe(request):
-    recipe=Recipe.objects.all().order_by('-created_at')
+    myRecipeList=getRecipe("all")
+    return JsonResponse({"statusCode": 200, "recipe": myRecipeList})
+@api_view(['GET'])
+def getSpecificUserRecipe(request):
+    userId = request.GET.get('userId')
+    specificUserRecipe=getRecipe(userId)
+    return JsonResponse({"statusCode": 200, "recipe": specificUserRecipe})
+def getRecipe(userId):
+    if userId=="all":
+        recipe=Recipe.objects.all().order_by('-created_at')
+    else:
+        print("userId is " + str(userId))
+        user=User.objects.filter(pk=userId).first()
+        recipe=Recipe.objects.filter(user=user).order_by('-created_at')
     myRecipeList=[]
     for r in recipe:
         if r.shareId is not None:
@@ -541,25 +532,83 @@ def getMyRecipe(request):
             "addedAt": r.created_at,
             }
             myRecipeList.append(myObject)
-           
-    return JsonResponse({"statusCode": 200, "recipe": myRecipeList})
-# getUser()
-# @api_view(['POST'])
-# def getReactorList(request):
-    #  reaction=Reaction.objects.filter(recipe=r)
-    #  media_filenames = [str(item.media) for item in media]
-    # reaction_data=[]
-    # for re in reaction:
-    #         reaction_data.append({
-    #             "user": {
-    #                     "name": re.reacter.name,
-    #                     "email": re.reacter.email,
-    #                     "pk":re.reacter.pk,
-    #                     "image": str(re.reacter.image)
-    #                 },
-    #                 "id":re.pk,
-    #                 "created_at": re.created_at,
-    #                 "recipeId":re.recipe.pk
-                    
-                    
-    #             })
+    return myRecipeList
+@api_view(['POST'])
+def followUser(request):
+    data=request.data
+    following=data.get('following') #whom following  follow
+    follower=data.get('follower') #those whow follow following
+    followeeUser=User.objects.filter(pk=following).first()
+    followerUser=User.objects.filter(pk=follower).first()
+    follow=Follow(followee=followeeUser,follower=followerUser)
+    follow.save()
+    if follow.save:
+        return JsonResponse({"status":"success","statusCode":200,"message":"following user successfully"})
+    else:
+        return JsonResponse({"status":"fail","statusCode":400,"message":"something went wrong.please try again"})
+def getMyFollower(following):
+    follow=Follow.objects.filter(following=following)
+    if follow.exists():
+        myfollowerList=[]
+        for f in follow:
+            user=User.objects.filter(pk=f.follower.pk).first()
+            myfollowerList.append({
+                  "user": {
+                        "name": user.name,
+                        "email": user.email,
+                        "pk":user.pk,
+                        "image": str(user.image)
+                    },
+                    "id":user.pk,
+            })
+        return myfollowerList
+            
+    else:
+        return 0
+def getMyFollowing(follower):
+    follow=Follow.objects.filter(follower=follower)
+    if follow.exists():
+        followingList=[]
+        for f in follow:
+            user=User.objects.filter(pk=f.following.pk).first()
+            followingList.append({
+                  "user": {
+                        "name": user.name,
+                        "email": user.email,
+                        "pk":user.pk,
+                        "image": str(user.image)
+                    },
+                    "id":user.pk,
+            })
+        return followingList
+            
+    else:
+        return 0
+def getFollower():
+    follower=getMyFollower(1)
+    print("follower"  + str(follower))
+def getFollowing():
+    following=getMyFollowing(1)
+    print("following"  + str(following))
+# getFollower()
+def getFollowerFollowingCount(follower,following):
+    follow=Follow.objects.filter(following=following)
+    if follow.exists():
+        followerCount=0
+        for f in follow:
+            followerCount+=1
+    follow=Follow.objects.filter(follower=follower)
+    if follow.exists():
+        followingCount=0
+        for f in follow:
+            followingCount=+1
+        return followerCount,followingCount
+    else:
+        return 0
+getFollowing()
+def myFollowAndFollowing():
+    follower,following=getFollowerFollowingCount(1,1)
+    print("dd")
+    print("follower",follower)
+    print("following",following)
+myFollowAndFollowing()
