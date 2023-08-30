@@ -9,78 +9,93 @@ class Intro {
 class User {
   String name;
   String email;
-  String? image;
+  String? image; // Change the type from List<String>? to String?
   int pk;
-  User({required this.name, required this.email, this.image, required this.pk});
-  factory User.fromJson(Map<String, dynamic> json) => User(
+
+  User({
+    required this.name,
+    required this.email,
+    this.image,
+    required this.pk,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
       name: json['name'],
       email: json['email'],
-      image: json['image'],
-      pk: json['pk']);
-  Map<String, dynamic> toJson() =>
-      {"email": email, "name": name, "image": image, "pk": pk};
+      image: json['image'], // Expect a string here
+      pk: json['pk'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        "email": email,
+        "name": name,
+        "image": image,
+        "pk": pk,
+      };
 }
 
 class RecipeItem {
-   List<String> image;
-   String title;
-   String description;
-   List<String>? steps;
-   List<String>? ingredients;
-   List<String>? hashtags;
-   int pk;
-   User user;
+  int? shareId;
+  String? shareTitle;
+  List<String>? image;
+  String? title;
+  String? description;
+  List<String>? steps;
+  List<String>? ingredients;
+  List<String>? hashtags;
+  int pk;
+  User user;
   DateTime addedAt;
-   int totalReact;
-   int totalComment;
-   int? totalShare;
-   List<React>? reaction;
+  int? totalReact;
+  int? totalComment;
+  int? totalShare;
+  List<React>? reaction;
   bool isShare;
-  String?sharetitle;
-  User?owner;
+
+  User? owner;
   RecipeItem(
-      {
-        required this.isShare,
-        this.sharetitle,
-        this.owner,
-        required this.totalComment,
-      required this.totalReact,
-      
+      {this.shareId,
+      this.shareTitle,
+      required this.isShare,
+      this.owner,
+      this.totalComment,
+      this.totalReact,
       this.reaction,
       this.totalShare,
-      required this.image,
-      required this.title,
-      required this.description,
-       this.steps,
-       this.ingredients,
-       this.hashtags,
+      this.image,
+      this.title,
+      this.description,
+      this.steps,
+      this.ingredients,
+      this.hashtags,
       required this.pk,
       required this.user,
-      required this.addedAt
-      });
+      required this.addedAt});
   factory RecipeItem.fromJson(Map<String, dynamic> json) {
-  return RecipeItem(
-    isShare: json["isShare"],
-    sharetitle: json["sharetitle"],
-    owner: json["owner"] != null ? User.fromJson(json["owner"]) : null,
-    reaction: json["reaction"] != null
-        ? List<React>.from(json["reaction"].map((x) => React.fromJson(x)))
-        : null,
-    pk: json["id"],
-    totalComment: json['totalComment'],
-    totalReact: json['totalReact'],
-    totalShare: json['totalShare'],
-    addedAt: DateTime.parse(json['addedAt']),
-    user: User.fromJson(json['user']),
-    image: List<String>.from(json['image']),
-    title: json['title'],
-    description: json['description'],
-    steps: List<String>.from(json['steps']),
-    ingredients: List<String>.from(json['ingredients']),
-    hashtags: List<String>.from(json['hashtags']),
-  );
-}
-
+    return RecipeItem(
+      isShare: json["isShare"],
+      shareId: json["shareId"],
+      shareTitle: json["shareTitle"],
+      owner: json["owner"] != null ? User.fromJson(json["owner"]) : null,
+      reaction: json["reaction"] != null
+          ? List<React>.from(json["reaction"].map((x) => React.fromJson(x)))
+          : null,
+      pk: json["id"],
+      totalComment: json['totalComment'],
+      totalReact: json['totalReact'],
+      totalShare: json['totalShare'],
+      addedAt: DateTime.parse(json['addedAt']),
+      user: User.fromJson(json['user']),
+      image: List<String>.from(json['image']),
+      title: json['title'],
+      description: json['description'],
+      steps: List<String>.from(json['steps']),
+      ingredients: List<String>.from(json['ingredients']),
+      hashtags: List<String>.from(json['hashtags']),
+    );
+  }
 }
 
 class Search {
@@ -115,7 +130,7 @@ class Comment {
       comment: json['comment'],
       id: json['id'],
       created_at: DateTime.parse(json['created_at']),
-      user:User.fromJson(json['user']));
+      user: User.fromJson(json['user']));
   Map<String, dynamic> toJson() =>
       {"comment": comment, "id": id, "created_at": created_at, "user": user};
 }

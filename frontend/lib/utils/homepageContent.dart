@@ -29,10 +29,16 @@ class _homePageContentState extends State<homePageContent> {
           return buildShimmer(context);
         } else if (value.items.length == 0) {
           return Container(
-            child: Center(child: smalltext(text: "Nothing to displau")),
+            child: Center(child: smalltext(text: "Nothing to display")),
           );
         }
+        if(value.specificUser.isNotEmpty){
+          return Container();
+        }
+        else{
         return ListView.builder(
+         physics: NeverScrollableScrollPhysics(),
+         shrinkWrap: true,
           itemCount: value.items.length,
           itemBuilder: (context, index) {
             final data = value.items[index]; // Remove [0] here
@@ -42,6 +48,7 @@ class _homePageContentState extends State<homePageContent> {
             //     data: data, currentImagePage: value.currentImagePage);
           },
         );
+        }
       },
     );
   }

@@ -79,8 +79,7 @@ flutter:
     - asset/images/
     - asset/lottie/
     - asset/video/
-    - asset/profile/
-    - asset/post-image/
+    - asset/profile-image/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

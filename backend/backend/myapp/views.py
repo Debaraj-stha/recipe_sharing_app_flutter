@@ -252,6 +252,8 @@ def likeRecipe(request):
     print(data)
     recipeId = data.get("recipeId")
     reactorId = data.get("reactorId")
+    
+        
     reactor = User.objects.filter(
         pk=reactorId
     ).first() 
@@ -428,18 +430,136 @@ def getShare():
                 "name":s.user.name,
                 "pk":s.user.pk,
                 "email":s.user.email,
-                "image": "",
+                "image": str(s.user.image),
             },
             "owner":{
                  "name":s.recipeOwner.name,
                 "pk":s. recipeOwner.pk,
                 "email":s. recipeOwner.email,
-                "image": "",
+                "image": str(s.recipeOwner.user.image),
             }
         })
     return shareList
-def getUser():
-    user=User.objects.all()
-    users=serializers.serialize('json',user)
-    print(users)
-getUser()
+def getMyRecipe(request):
+    recipe=Recipe.objects.all().order_by('-created_at')
+    myRecipeList=[]
+    for r in recipe:
+        if r.shareId is not None:
+            
+            sharedRecipe=Recipe.objects.filter(pk=r.shareId.recipe.pk).first()
+            print(str(sharedRecipe))
+            media = RecipeMedia.objects.filter(recipe=sharedRecipe)
+            comment = Comment.objects.filter(recipe=r)
+            reaction=Reaction.objects.filter(recipe=r)
+            media_filenames = [str(item.media) for item in media]
+            
+
+            reaction_data=[]
+            for re in reaction:
+                reaction_data.append({
+                "user": {
+                        "name": re.reacter.name,
+                        "email": re.reacter.email,
+                        "pk":re.reacter.pk,
+                        "image": str(re.reacter.image)
+                    },
+                    "id":re.pk,
+                    "created_at": re.created_at,
+                    "recipeId":re.recipe.pk
+                    
+                    
+                })
+            myObject={
+                "user": {
+                "name": r.user.name,
+                "pk": r.user.pk,
+                "email": r.user.email,
+                "image": str(r.user.image)
+            },
+            "reaction":reaction_data,
+            "shareId": r.shareId.pk,
+            "shareTitle": r.shareId.title,
+            "owner":{
+                 "name": r.shareId.recipeOwner.name,
+                "pk": r.shareId.recipeOwner.pk,
+                "email": r.shareId.recipeOwner.email,
+                "image": str(r.shareId.recipeOwner.image),
+                },
+            "totalReact":reaction.count(),
+            "totalComment":comment.count(),
+            "totalShare":0,
+            "isShare":True,
+            "image": media_filenames,
+            "title": r.title,
+            "description": r.description,
+            "steps": r.steps,
+            "ingredients": r.ingredients,
+            "hashtags": r.hastags,
+            "id": r.pk,
+            "addedAt": r.created_at,
+            }
+            myRecipeList.append(myObject)
+        else:
+            media = RecipeMedia.objects.filter(recipe=r)
+            comment = Comment.objects.filter(recipe=r)
+            reaction=Reaction.objects.filter(recipe=r)
+            media_filenames = [str(item.media) for item in media]
+            reaction_data=[]
+            for re in reaction:
+                reaction_data.append({
+                "user": {
+                        "name": re.reacter.name,
+                        "email": re.reacter.email,
+                        "pk":re.reacter.pk,
+                        "image": str(re.reacter.image)
+                    },
+                    "id":re.pk,
+                    "created_at": re.created_at,
+                    "recipeId":re.recipe.pk
+                    
+                    
+                })
+            myObject={
+                "user": {
+                "name": r.user.name,
+                "pk": r.user.pk,
+                "email": r.user.email,
+                "image": str(r.user.image),
+            },
+            "reaction":reaction_data,
+            "totalReact":reaction.count(),
+            "totalComment":comment.count(),
+            "totalShare":0,
+            "isShare":False,
+            "image": media_filenames,
+            "title": r.title,
+            "description": r.description,
+            "steps": r.steps,
+            "ingredients": r.ingredients,
+            "hashtags": r.hastags,
+            "id": r.pk,
+            "addedAt": r.created_at,
+            }
+            myRecipeList.append(myObject)
+           
+    return JsonResponse({"statusCode": 200, "recipe": myRecipeList})
+# getUser()
+# @api_view(['POST'])
+# def getReactorList(request):
+    #  reaction=Reaction.objects.filter(recipe=r)
+    #  media_filenames = [str(item.media) for item in media]
+    # reaction_data=[]
+    # for re in reaction:
+    #         reaction_data.append({
+    #             "user": {
+    #                     "name": re.reacter.name,
+    #                     "email": re.reacter.email,
+    #                     "pk":re.reacter.pk,
+    #                     "image": str(re.reacter.image)
+    #                 },
+    #                 "id":re.pk,
+    #                 "created_at": re.created_at,
+    #                 "recipeId":re.recipe.pk
+                    
+                    
+    #             })

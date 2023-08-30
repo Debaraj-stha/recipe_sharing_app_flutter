@@ -69,6 +69,8 @@ class myProvider with ChangeNotifier {
   List<RecipeItem> get searchItems => _searchItems;
   List<Comment> _comments = [];
   List<Comment> get comments => _comments;
+  List<RecipeItem> specificUser=[];
+  bool isUserBack=true;
   void initialize() {
     pageController = PageController();
     nameController = TextEditingController();
@@ -251,11 +253,15 @@ class myProvider with ChangeNotifier {
     }
   }
 
-  void likeRecipie(String id,String userId, AnimationController controller) async {
+  void likeRecipie(String id, String userId, AnimationController controller,
+      {bool isShare = false}) async {
     debugPrint("id = " + id);
     try {
-      final response = await http.post(Uri.parse(baseURL + "/like-recipe"),
-          body: {"reactorId": userId, "recipeId": id});
+      final response =
+          await http.post(Uri.parse(baseURL + "/like-recipe"), body: {
+        "reactorId": userId,
+        "recipeId": id,
+      });
       final data = jsonDecode(response.body);
       if (data['statusCode'] != 200) {
         showmessage(data['message'], bgColor: Colors.red);
@@ -276,19 +282,19 @@ class myProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void shareRecipie(String id) {
-    try {
-      if (shareRecipeCount.containsKey(id)) {
-        shareRecipeCount[id] += 1;
-      } else {
-        shareRecipeCount[id] = 1;
-      }
-    } on Exception catch (e) {
-      showmessage("Exception occured : " + e.toString());
-    }
-    loadRecipe();
-    notifyListeners();
-  }
+  // void shareRecipie(String id) {
+  //   try {
+  //     if (shareRecipeCount.containsKey(id)) {
+  //       shareRecipeCount[id] += 1;
+  //     } else {
+  //       shareRecipeCount[id] = 1;
+  //     }
+  //   } on Exception catch (e) {
+  //     showmessage("Exception occured : " + e.toString());
+  //   }
+  //   loadRecipe();
+  //   notifyListeners();
+  // }
 
   void handleupopUpButton(int index) {}
   void clearField() {
@@ -327,7 +333,7 @@ class myProvider with ChangeNotifier {
       if (isProfile) {
         profile = await picker.pickImage(source: s);
       } else {
-        imageFile = (await picker.pickMultiImage())!;
+        imageFile = (await picker.pickMultiImage());
         if (imageFile!.isEmpty) {
           showmessage("No image selected");
         } else {
@@ -433,7 +439,7 @@ class myProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final recipedata = data['recipe'];
-   
+
         for (var item in recipedata) {
           _items.add(RecipeItem.fromJson(item));
         }
@@ -480,9 +486,9 @@ class myProvider with ChangeNotifier {
     for (var data in _items) {
       if (data.pk == id) {
         if (up) {
-          data.totalReact++;
+          data.totalReact = 1 + data.totalReact!;
         } else
-          data.totalReact--;
+          data.totalReact = data.totalReact! - 1;
         notifyListeners();
       }
     }
@@ -502,8 +508,11 @@ class myProvider with ChangeNotifier {
       }
     }
     if (data['statusCode'] == 404) {
-    } else {
       showmessage("${data['message']}", bgColor: Colors.red);
+    } else {
+      showmessage(
+        "${data['message']}",
+      );
     }
     notifyListeners();
   }
@@ -528,29 +537,34 @@ class myProvider with ChangeNotifier {
 
   void postComment(int pk, int userId, ScrollController controller) async {
     debugPrint(pk.toString());
-    final response =
-        await http.post(Uri.parse(baseURL + "/comment-recipe"), body: {
-      "recipeId": pk.toString(),
-      "userId": userId.toString(),
-      "comment": textEditingController.text
-    });
-    final data = jsonDecode(response.body);
-    if (data['statusCode'] == 200) {
-      showmessage(data['message']);
-      final lastComment = data['comment'];
-      _comments.add(Comment.fromJson(lastComment));
-      increaseCommentCount(pk);
-      if (controller.hasClients) {
-        controller.animateTo(
-          controller.position.maxScrollExtent + 70,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+    if (textEditingController.text.isNotEmpty &&
+        textEditingController.text.trim().isNotEmpty) {
+      final response =
+          await http.post(Uri.parse(baseURL + "/comment-recipe"), body: {
+        "recipeId": pk.toString(),
+        "userId": userId.toString(),
+        "comment": textEditingController.text
+      });
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        showmessage(data['message']);
+        final lastComment = data['comment'];
+        _comments.add(Comment.fromJson(lastComment));
+        increaseCommentCount(pk);
+        if (controller.hasClients) {
+          controller.animateTo(
+            controller.position.maxScrollExtent + 70,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+        notifyListeners();
+        textEditingController.clear();
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
       }
-      notifyListeners();
-      textEditingController.clear();
     } else {
-      showmessage(data['message'], bgColor: Colors.red);
+      return;
     }
     focusNode.unfocus();
   }
@@ -558,7 +572,9 @@ class myProvider with ChangeNotifier {
   void increaseCommentCount(int recipePk) {
     for (var recipe in _items) {
       if (recipe.pk == recipePk) {
-        recipe.totalComment += 1;
+        if (recipe.totalComment != null) {
+          recipe.totalComment = 1 + recipe.totalComment!;
+        }
         notifyListeners();
       }
     }
@@ -583,7 +599,7 @@ class myProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void shareRecipe(int recipeId, int userId) async {
+  void shareRecipe(String recipeId, String userId) async {
     final response = await http.post(Uri.parse(baseURL + "/share-recipe"),
         body: {
           "recipeId": recipeId,
@@ -592,9 +608,11 @@ class myProvider with ChangeNotifier {
         });
     final data = await jsonDecode(response.body);
     if (data['statusCode'] == 200) {
-      showmessage(data['messsage']);
+      showmessage(data['message']);
     } else {
-      showmessage(data['messsage'], bgColor: Colors.red);
+      showmessage(data['message'], bgColor: Colors.red);
     }
+    loadRecipe();
+    notifyListeners();
   }
 }

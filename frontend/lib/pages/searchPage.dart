@@ -51,7 +51,7 @@ class _searchPageState extends State<searchPage> {
                               SizedBox(
                                 width: 10,
                               ),
-                              smalltext(text: data.title)
+                              data.title!=null?smalltext(text: data.title!):Container()
                             ],
                           ),
                         ),

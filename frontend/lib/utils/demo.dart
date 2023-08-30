@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
+import 'package:frontend/pages/userPage.dart';
 
 import 'package:frontend/utils/mediumtext.dart';
 import 'package:frontend/utils/reactorList.dart';
@@ -26,6 +27,7 @@ class demo extends StatefulWidget {
 
 class _demoState extends State<demo> with TickerProviderStateMixin {
   late AnimationController animationController, controller;
+  int userId = 2;
   @override
   void initState() {
     // TODO: implement initState
@@ -84,6 +86,7 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                         child: InkWell(
                           onTap: () {
                             debugPrint("onTap");
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=>userPage()));
                           },
                           child: Row(
                             // crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,10 +137,10 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                       ),
                     )
                   : Container(),
-              widget.data.sharetitle != null
+              widget.data.shareTitle != null
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: mediumtext(text: widget.data.sharetitle),
+                      child: mediumtext(text: widget.data.shareTitle),
                     )
                   : Container(),
                    Divider(
@@ -235,10 +238,10 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                             height: 110,
                             child: InkWell(
                               onTap: () {
-                                debugPrint( widget.data.pk.toString());
+                                debugPrint(widget.data.pk.toString());
                                 p.likeRecipie(widget.data.pk.toString(),
-                               "1",
-                                    animationController!);
+                               userId.toString(),
+                                    animationController!,isShare:widget.data.isShare);
                               },
                               child: Lottie.asset(
                                 "asset/lottie/heart.json",
@@ -273,7 +276,7 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                           SizedBox(height: 10),
                           InkWell(
                             onTap: () {
-                              p.shareRecipie(widget.data.pk.toString());
+                              p.shareRecipe(widget.data.pk.toString(), 1.toString());
                             },
                             child: Icon(
                               Icons.share_outlined,
@@ -343,10 +346,11 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
               ),
               Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: smalltext(
-                      text: widget.data.description.length > 100
+                  child:widget.data.description!=null?smalltext(
+                      text: 
+                      widget.data.description.length > 100
                           ? widget.data.description.substring(0, 100) + "..."
-                          : widget.data.description))
+                          : widget.data.description):Container())
             ],
           ),
         ),

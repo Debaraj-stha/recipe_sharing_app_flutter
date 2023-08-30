@@ -48,8 +48,8 @@ class _commentPageState extends State<commentPage> {
         ),
       ),
       body: Container(
-        color: constraints.colorGrey,
-        padding: EdgeInsets.symmetric(vertical: 5),
+        color: constraints.colorLightGrey,
+        padding: EdgeInsets.only(bottom: 10),
         child: Column(
           children: [
             Expanded(
@@ -57,7 +57,7 @@ class _commentPageState extends State<commentPage> {
                 builder: (context, value, child) {
                   return ListView.builder(
                     controller: scrollController,
-                    padding: EdgeInsets.symmetric(vertical: 10),
+                    padding: EdgeInsets.only(bottom: 10),
                     itemCount: value.comments.length,
                     itemBuilder: (context, index) {
                       final comment = value.comments[index];
@@ -71,6 +71,7 @@ class _commentPageState extends State<commentPage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               child: TextFormField(
+                maxLines: 2,
                 controller: provider.textEditingController,
                 onFieldSubmitted: (value) {
                   provider.postComment(widget.pk, userId,scrollController!);
@@ -87,6 +88,7 @@ class _commentPageState extends State<commentPage> {
                         size: 30,
                       )),
                   border: InputBorder.none,
+                  
                   hintText: "Comment here",
                   hintStyle: TextStyle(fontFamily: "NotoSerif"),
                 ),

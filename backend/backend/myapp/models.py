@@ -12,8 +12,8 @@ class User(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
     image=models.ImageField(upload_to="profile-image/",null=True, blank=True,max_length=100)
     
-    def __str__(self) -> str:
-        return  self.name
+    # def __str__(self) -> str:
+    #     return  self.name
 
 
 
