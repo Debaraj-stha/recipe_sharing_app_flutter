@@ -113,7 +113,14 @@ flutter:
     - family: Righteous
       fonts:
         - asset: fonts/Righteous-Regular.ttf
-        
+    - family: Lato
+      fonts:
+        - asset: fonts/Lato-Bold.ttf
+        - asset: fonts/Lato-Black.ttf
+        - asset: fonts/Lato-Regular.ttf
+        - asset: fonts/Lato-Thin.ttf
+        - asset: fonts/Lato-Light.ttf
+
     
 
 

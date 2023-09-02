@@ -24,9 +24,13 @@ class dbController {
       String intro = 'create table intro(intro TEXT)';
       String user = 'create table user(email TEXT,name TEXT,image TEXT)';
       String search = 'create table search(query TEXT,id TEXT)';
+      String saverecipe =
+          'create table saverecipe(shareTitle Text,shareId Integer,image TEXT,title TEXT,description TEXT,ingredients Text,steps Text,hashtags Text,pk Integer,user Text,addedAt integer,totalReact integer,totalCount integer,totalShare integer,isShare Text,reaction Text,owner Text)';
+
       db.execute(intro);
       db.execute(user);
       db.execute(search);
+      db.execute(saverecipe);
     });
     return db;
   }
@@ -99,6 +103,35 @@ class dbController {
     } else {
       final List<Map<String, Object?>> search = await dbClient.query("search");
       return search.map((e) => Search.fromJson(e)).toList();
+    }
+  }
+
+  Future<bool> insertRecipe(RecipeItem recipeItem) async {
+    try {
+      var dbClient = await db;
+      await dbClient!.insert("saverecipe", recipeItem.toJson());
+      return true;
+    } on Exception catch (e) {
+      return false;
+    }
+  }
+    Future<bool> deleteRecipe(int pk) async {
+    try {
+      var dbClient = await db;
+      await dbClient!.delete("saverecipe",where: "pk=?",whereArgs: [pk]);
+      return true;
+    } on Exception catch (e) {
+      return false;
+    }
+  }
+  Future<List<RecipeItem>> getRecipe() async {
+    var dbClient=await db;
+    if(dbClient==null){
+      return [];
+    }
+    else{
+      final List<Map<String, Object?>> result=await dbClient.query("saverecipe");
+      return result.map((e) => RecipeItem.fromJson(e)).toList();
     }
   }
 }

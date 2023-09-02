@@ -43,6 +43,8 @@ class _homePage1State extends State<homePage1> {
   Widget build(BuildContext context) {
     final provider = Provider.of<myProvider>(context, listen: false);
     provider.loadRecipe();
+    provider.getFollowUser("1");
+    provider.getFollowing("1");
     provider.initialize();
     return Scaffold(
         body: Consumer<myProvider>(builder: (context, value, child) {

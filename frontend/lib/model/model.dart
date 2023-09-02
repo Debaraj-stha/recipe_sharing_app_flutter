@@ -1,3 +1,5 @@
+import 'package:frontend/pages/singleRecipePage.dart';
+
 class Intro {
   Intro({required this.intro});
   String intro;
@@ -53,8 +55,8 @@ class RecipeItem {
   int? totalShare;
   List<React>? reaction;
   bool isShare;
-
   User? owner;
+
   RecipeItem(
       {this.shareId,
       this.shareTitle,
@@ -96,6 +98,28 @@ class RecipeItem {
       hashtags: List<String>.from(json['hashtags']),
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      "shareId": shareId,
+      "shareTitle": shareTitle,
+      "isShare": isShare,
+      "owner": owner?.toJson(),
+      "reaction": reaction?.map((react) => react.toJson()).toList(),
+      "pk": pk,
+      "totalComment": totalComment,
+      "totalReact": totalReact,
+      "totalShare": totalShare,
+      "addedAt": addedAt.toIso8601String(),
+      "user": user.toJson(),
+      "image": image,
+      "title": title,
+      "description": description,
+      "steps": steps,
+      "ingredients": ingredients,
+      "hashtags": hashtags,
+    };
+  }
+
 }
 
 class Search {
@@ -152,4 +176,29 @@ class React {
       recipeId: json['recipeId']);
   Map<String, dynamic> toJson() =>
       {"id": id, "created_at": created_at, "user": user, "recipeId": recipeId};
+}
+
+class Follower {
+  User user;
+  int id;
+  Follower({required this.id, required this.user});
+  factory Follower.fromJson(Map<String, dynamic> json) =>
+      Follower(id: json['id'], user: User.fromJson(json['user']));
+  Map<String, dynamic> toJson() => {
+        "user": user,
+        "id": id,
+      };
+}
+
+class FollowerCount {
+  FollowerCount({required this.follower, required this.following});
+
+  int follower;
+  int following;
+  factory FollowerCount.fromJson(Map<String, dynamic> json) => FollowerCount(
+        follower: json['follower'],
+        following: json['following'],
+      );
+  Map<String, dynamic> toJSON() =>
+      {"follower": follower, "following": following};
 }

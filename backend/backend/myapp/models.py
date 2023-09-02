@@ -63,3 +63,10 @@ class Follow(models.Model):
     follower=models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE,related_name="follower")
     following=models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE,related_name="follo")
 
+class BlockUser(models.Model):
+    userId=models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE,related_name="userId")
+    blockedUserId=models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE,related_name="blockedUserId")
+class ReportToRecipe(models.Model):
+    recipeId=models.ForeignKey(Recipe, on_delete=models.CASCADE,null=True,blank=True)
+    reporterId=models.ForeignKey(User,null=True,blank=True,on_delete=models.CASCADE)
+    report=models.TextField(null=True, blank=True)

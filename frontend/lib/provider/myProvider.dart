@@ -3,12 +3,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:frontend/pages/accountPage.dart';
+import 'package:frontend/pages/discoverPage.dart';
+import 'package:frontend/pages/homepage1.dart';
+import 'package:frontend/pages/searchPage.dart';
 import 'package:frontend/utils/toastmessage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:dio/dio.dart' as Dio;
 import 'package:http/http.dart' as http;
 
+import '../controller/dbcontroller.dart';
 import '../model/model.dart';
 
 class myProvider with ChangeNotifier {
@@ -69,8 +74,15 @@ class myProvider with ChangeNotifier {
   List<RecipeItem> get searchItems => _searchItems;
   List<Comment> _comments = [];
   List<Comment> get comments => _comments;
-  List<RecipeItem> specificUser=[];
-  bool isUserBack=true;
+  List<RecipeItem> specificUserRecipe = [];
+  Map<String,dynamic> selectedrecipeforDelete = {};
+  bool isUserBack = false;
+  List<Follower> followers = [];
+  List<Follower> followings = [];
+  List<FollowerCount> followerCount = [];
+  Map<String, dynamic> followedText = {};
+  // final _dbcontroller=new dbController();
+  List<RecipeItem> savedRecipe = [];
   void initialize() {
     pageController = PageController();
     nameController = TextEditingController();
@@ -106,6 +118,7 @@ class myProvider with ChangeNotifier {
     passwordController.dispose();
     emailNode.dispose();
     emailNode.dispose();
+    // _dbcontroller.dispose();
     nameNode.dispose();
     imagePageController.dispose();
     singleRecipePageController.dispose();
@@ -296,7 +309,40 @@ class myProvider with ChangeNotifier {
   //   notifyListeners();
   // }
 
-  void handleupopUpButton(int index) {}
+  void handleupopUpButton(int index, BuildContext context) {
+    switch (index) {
+      case 1:
+        currentActiveTab = 0;
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => homePage1()));
+
+        break;
+      case 2:
+        currentActiveTab = 1;
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => discoverPage()));
+        break;
+      case 3:
+        currentActiveTab = 2;
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => searchPage()));
+        break;
+      case 4:
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => accountPage()));
+        break;
+      // case 5:
+
+      // // Navigator.push(context, MaterialPageRoute(builder: (context)=>homePage1()));
+      // break;
+      // case 6:
+      // // Navigator.push(context, MaterialPageRoute(builder: (context)=>homePage1()));
+      // break;
+    }
+
+    notifyListeners();
+  }
+
   void clearField() {
     searchController.clear();
     searchNode.unfocus();
@@ -432,32 +478,34 @@ class myProvider with ChangeNotifier {
 
   void loadRecipe() async {
     try {
-      isLoading = true;
-      _items = [];
-      final response = await http.get(Uri.parse(baseURL + "/get-recipe"));
-      final data = jsonDecode(response.body);
+      if (_items.isEmpty) {
+        isLoading = true;
+        _items = [];
+        final response = await http.get(Uri.parse(baseURL + "/get-recipe"));
+        final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        final recipedata = data['recipe'];
+        if (response.statusCode == 200) {
+          final recipedata = data['recipe'];
 
-        for (var item in recipedata) {
-          _items.add(RecipeItem.fromJson(item));
+          for (var item in recipedata) {
+            _items.add(RecipeItem.fromJson(item));
+            savedRecipe.add(RecipeItem.fromJson(item));
+          }
+          // debugPrint(recipedata.toString());
+          showmessage("Recipe loaded successfully");
+          Future.delayed(Duration(seconds: 2), () {
+            toggleLoading();
+          });
+        } else {
+          showmessage("Something went wrong.");
         }
-        debugPrint(recipedata.toString());
-        showmessage("Recipe loaded successfully");
-        Future.delayed(Duration(seconds: 2), () {
-          toggleLoading();
-        });
-      } else {
-        showmessage("Something went wrong.");
+        notifyListeners();
       }
     } on Exception catch (e) {
       debugPrint("exception occured : " + e.toString());
       showmessage("exception occured : " + e.toString(), bgColor: Colors.red);
     }
     bool isReact = isAlreadyReact(20, 29);
-    debugPrint("isReact : " + isReact.toString());
-    notifyListeners();
   }
 
   void toggleLoading() {
@@ -613,6 +661,232 @@ class myProvider with ChangeNotifier {
       showmessage(data['message'], bgColor: Colors.red);
     }
     loadRecipe();
+    notifyListeners();
+  }
+
+  void getFollowUser(String userId) async {
+    try {
+      followers.clear();
+      final response = await http
+          .get(Uri.parse(baseURL + "/get-follow-user?userId=$userId"));
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        final followerList = data['followers'];
+        debugPrint(followerList.toString());
+        for (var follower in followerList) {
+          // debugPrint("user: " + follower.toString());
+          followers.add(Follower.fromJson(follower));
+        }
+        notifyListeners();
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } on Exception catch (e) {
+      showmessage("Something went wrong.Message: " + e.toString());
+    }
+  }
+
+  void getFollowing(String userId) async {
+    try {
+      followings.clear();
+      final response = await http
+          .get(Uri.parse(baseURL + "/get-following-user?userId=$userId"));
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        final followingList = data['followings'];
+        // debugPrint("following" + followingList.toString());
+        for (var following in followingList) {
+          followings.add(Follower.fromJson(following));
+        }
+        notifyListeners();
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } on Exception catch (e) {
+      showmessage("Something went wrong.Message: " + e.toString());
+    }
+  }
+
+  void followUser(String follower, String following, String followerId) async {
+// following=me
+// follower=user
+    try {
+      debugPrint("f" + follower);
+      debugPrint("fol" + following);
+      debugPrint("foloowerid" + followerId);
+      final response = await http.post(Uri.parse(baseURL + "/follow-user"),
+          body: {"follower": follower, "following": following});
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        showmessage(data['message']);
+        // followers.removeWhere((element) => element.id==int.parse(following));
+        final followedUser = data['followedUser'];
+        followings.add(Follower.fromJson(followedUser));
+        handleFollowedText(followerId, "Following");
+        debugPrint(followedText.toString());
+        notifyListeners();
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } on Exception catch (e) {
+      showmessage("Something went wrong.Message: " + e.toString());
+    }
+  }
+
+  void unfollowUser(String id) async {
+// following=me
+// follower=user
+    try {
+      final response =
+          await http.post(Uri.parse(baseURL + "/unfollow-user"), body: {
+        "pk": id,
+      });
+      debugPrint(id);
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        showmessage(data['message']);
+        followings.removeWhere((element) => element.id == int.parse(id));
+        notifyListeners();
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } on Exception catch (e) {
+      showmessage("Something went wrong.Message: " + e.toString());
+    }
+  }
+
+  void getSpecificuserRecipe(String userId) async {
+    try {
+      final response = await http
+          .get(Uri.parse(baseURL + "/get-user-recipe?userId=$userId"));
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        var recipe = data['recipe'];
+        var followerFollowing = data['followerFollowing'];
+        for (var item in recipe) {
+          specificUserRecipe.add(RecipeItem.fromJson(item));
+        }
+        debugPrint(followerFollowing.toString());
+        followerCount.add(FollowerCount.fromJson(followerFollowing));
+        notifyListeners();
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } on Exception catch (e) {
+      showmessage("Something went wrong.Message: " + e.toString());
+    }
+  }
+
+  void handleisBack() {
+    isUserBack = !isUserBack;
+    notifyListeners();
+  }
+
+  String chnageFollowedText(String id, String text) {
+    if (followedText.containsKey(id)) {
+      debugPrint("listend if");
+      return followedText[id];
+    } else {
+      followedText[id] = text;
+      debugPrint("listednde else");
+      return followedText[id];
+    }
+  }
+
+  void handleFollowedText(String id, String text) {
+    followedText[id] = text;
+    notifyListeners();
+  }
+
+  void saveRecipe(int pk) {
+    try {
+      RecipeItem item = getRecipeContentFromId(pk);
+      // _dbcontroller.insertRecipe(item).then((value){
+      //   if(value){
+      //     showmessage("Recipe saved successfully");
+      //   }
+      //   else{
+      //      showmessage(" Something went wrong while saving Recipe saved successfully");
+      //   }
+      // });
+      notifyListeners();
+    } on Exception catch (e) {
+      showmessage(e.toString());
+    }
+  }
+
+  RecipeItem getRecipeContentFromId(int id) {
+    try {
+      return _items.firstWhere((item) => item.pk == id);
+    } catch (e) {
+      return _items[0];
+    }
+  }
+
+  void getSavedRecipe() async {
+    try {
+// savedRecipe=await _controller.getRecipe();
+      notifyListeners();
+    } catch (e) {
+      showmessage(e.toString());
+    }
+  }
+
+  void deleteSavedRecipe(int pk) async {
+    try {
+// await _controller.deleteRecipe(pk).then((val){
+//   if(val){
+//     showmessage('recipe deleted successfully ');
+//     savedRecipe.removeWhere((element) => element.pk==pk);
+//   }
+//   else{
+//     showmessage("Something went wrong while deleting recipe");
+//   }
+// })
+      notifyListeners();
+    } catch (e) {
+      showmessage(e.toString());
+    }
+  }
+
+  void blockUser(String userId, String blockedUserId) async {
+    try {
+      final response = await http.post(Uri.parse(baseURL + "/block-user"),
+          body: {"userId": userId, "blockedUserId": blockedUserId});
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        showmessage(data['message']);
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } catch (e) {
+      showmessage(e.toString());
+    }
+  }
+
+  void reportToContent(String contentPk, String reporterId) async {
+    try {
+      final response = await http.post(Uri.parse(baseURL + "/report-content"),
+          body: {"recipeId": contentPk, "reporterId": reporterId});
+      final data = jsonDecode(response.body);
+      if (data['statusCode'] == 200) {
+        showmessage(data['message']);
+      } else {
+        showmessage(data['message'], bgColor: Colors.red);
+      }
+    } catch (e) {
+      showmessage(e.toString());
+    }
+  }
+  
+  bool getSelectedRecipeForDelete(String index)=>selectedrecipeforDelete[index]??false;
+  void handleSelectedRecipe(String index,bool value){
+    if(selectedrecipeforDelete.containsKey(index)){
+      selectedrecipeforDelete[index]=!selectedrecipeforDelete[index];
+    }
+    else{
+      selectedrecipeforDelete[index]=value;
+    }
     notifyListeners();
   }
 }

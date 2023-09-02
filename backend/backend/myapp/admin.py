@@ -8,6 +8,8 @@ admin.site.register(Comment)
 admin.site.register(RecipeMedia)
 admin.site.register(Share)
 admin.site.register(Follow)
+admin.site.register(BlockUser)
+admin.site.register(ReportToRecipe)
 from django.contrib import admin
 from .models import Reaction
 

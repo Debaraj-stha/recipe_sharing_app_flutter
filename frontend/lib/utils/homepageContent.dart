@@ -32,22 +32,39 @@ class _homePageContentState extends State<homePageContent> {
             child: Center(child: smalltext(text: "Nothing to display")),
           );
         }
-        if(value.specificUser.isNotEmpty){
-          return Container();
-        }
-        else{
-        return ListView.builder(
-         physics: NeverScrollableScrollPhysics(),
-         shrinkWrap: true,
-          itemCount: value.items.length,
-          itemBuilder: (context, index) {
-            final data = value.items[index]; // Remove [0] here
+        if (value.isUserBack) {
+          if (value.specificUserRecipe.isEmpty) {
+            return Container(child: Center(child: smalltext(text: "Nothing to show"),),);
+          }
+          else{
+            return  ListView.builder(
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: value.specificUserRecipe.length,
+            itemBuilder: (context, index) {
+              final data = value.specificUserRecipe[index]; // Remove [0] here
 
-            return demo(data: data,currentImagePage: value.currentImagePage);
-            //  singleRecipeContent(
-            //     data: data, currentImagePage: value.currentImagePage);
-          },
-        );
+              return demo(data: data, currentImagePage: value.currentImagePage);
+              //  singleRecipeContent(
+              //     data: data, currentImagePage: value.currentImagePage);
+            },
+          );
+          }
+        } else {
+          return SingleChildScrollView(
+            child: ListView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: value.items.length,
+              itemBuilder: (context, index) {
+                final data = value.items[index]; // Remove [0] here
+          
+                return demo(data: data, currentImagePage: value.currentImagePage);
+                //  singleRecipeContent(
+                //     data: data, currentImagePage: value.currentImagePage);
+              },
+            ),
+          );
         }
       },
     );

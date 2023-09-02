@@ -52,7 +52,7 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
   void dispose() {
     // TODO: implement dispose
     controller.dispose();
-    animationController!.dispose();
+    animationController.dispose();
     super.dispose();
   }
 
@@ -79,73 +79,102 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              widget.data.isShare
+              widget.data.isShare == true
                   ? Container(
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: InkWell(
                           onTap: () {
                             debugPrint("onTap");
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>userPage()));
+
+                            if (p.specificUserRecipe.isEmpty) {
+                              p.getSpecificuserRecipe(userId.toString());
+                              debugPrint("getSpecificuserRecipe");
+                            }
+                            p.handleisBack();
+                            debugPrint(p.isUserBack.toString());
+
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const userPage()));
                           },
-                          child: Row(
-                            // crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 90,
-                                height: 90,
-                                child: ClipOval(
-                                  child: Image(
-                                    image:
-                                        AssetImage("asset/images/discover.png"),
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 5,),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  smalltext(
-                                      text: widget.data.user.name + " Share",
-                                      weight: FontWeight.bold),
-                                  smalltext(
-                                      text:
-                                          "${widget.data.owner.name} recipe"),
-                                  smalltext(
-                                    text: DateFormat('yyyy-MM-dd HH:mm')
-                                        .format(widget.data.addedAt),
-                                  )
-                                ],
-                              ),
-                              Spacer(),
-                              widget.data.isShare
-                                  ? IconButton(
-                                      onPressed: () {
-                                        buttomSheet(context);
-                                      },
-                                      icon: Icon(
-                                        Icons.more_horiz,
-                                        color: constraints.colorBlack,
-                                      ),
-                                    )
-                                  : Container()
-                            ],
-                          ),
+                          child:Row(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align text to the top
+  children: [
+    Container(
+      width: 90,
+      height: 90,
+      child: ClipOval(
+        child: Image(
+          image: AssetImage("asset/images/discover.png"),
+          fit: BoxFit.contain,
+        ),
+      ),
+    ),
+    SizedBox(width: 5),
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: "Roboto",
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              children: [
+                TextSpan(
+                  text: widget.data.user.name,
+                  style: TextStyle(fontSize: 18),
+                ),
+                TextSpan(
+                  text: " shared a ${widget.data.owner.name} new Recipe",
+                  style: TextStyle(fontWeight: FontWeight.normal),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 4), // Add spacing between RichText and smalltext
+          smalltext(
+            text: DateFormat('yyyy-MM-dd HH:mm').format(widget.data.addedAt),
+            // family: "Righteous",
+          ),
+        ],
+      ),
+    ),
+    widget.data.isShare
+        ? IconButton(
+            onPressed: () {
+              buttomSheet(context,widget.data.pk);
+            },
+            icon: Icon(
+              Icons.more_horiz,
+              color: constraints.colorBlack,
+            ),
+          )
+        : Container(),
+  ],
+)
+
                         ),
                       ),
                     )
                   : Container(),
               widget.data.shareTitle != null
                   ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: mediumtext(text: widget.data.shareTitle),
+                      padding: const EdgeInsets.only(left: 8, right: 8),
+                      child: smalltext(
+                        text: widget.data.shareTitle,
+                        weight: FontWeight.w500,
+                      ),
                     )
                   : Container(),
-                   Divider(
-          thickness: 3,
-        ),
+              Divider(
+                thickness: 3,
+              ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
@@ -153,7 +182,6 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                     debugPrint("onTap");
                   },
                   child: Row(
-                    // crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         width: 90,
@@ -165,41 +193,64 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      SizedBox(width: 5,),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          smalltext(
-                              text: widget.data.isShare
-                                  ? widget.data.owner.name
-                                  : widget.data.user.name,
-                              weight: FontWeight.bold),
-                          smalltext(
-                            text: DateFormat('yyyy-MM-dd HH:mm')
-                                .format(widget.data.addedAt),
-                          )
-                        ],
+                      SizedBox(width: 5),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontFamily: "Roboto",
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                                children: [
+                                  TextSpan(
+                                      text: widget.data.isShare
+                                          ? widget.data.owner.name
+                                          : widget.data.user.name,
+                                      style: TextStyle(fontSize: 18)),
+                                  TextSpan(
+                                    text: " added a new hhhhh Recipe",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.normal),
+                                  ),
+                                ],
+                              ),
+                              // overflow: TextOverflow.ellipsis,
+                              // maxLines: 1,
+                            ),
+                            smalltext(
+                              text: DateFormat('yyyy-MM-dd HH:mm')
+                                  .format(widget.data.addedAt),
+                              weight: FontWeight.w500,
+                              // family: "Righteous",
+                            ),
+                          ],
+                        ),
                       ),
-                      Spacer(),
                       widget.data.isShare == false
                           ? IconButton(
                               onPressed: () {
-                                buttomSheet(context);
+                                buttomSheet(context,widget.data.pk);
                               },
                               icon: Icon(
                                 Icons.more_horiz,
                                 color: constraints.colorBlack,
                               ),
                             )
-                          : Container()
+                          : Container(),
                     ],
                   ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: mediumtext(text: widget.data.title),
+                child: smalltext(
+                  text: widget.data.title,
+                  weight: FontWeight.w500,
+                ),
               ),
               Stack(
                 children: [
@@ -240,8 +291,8 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                               onTap: () {
                                 debugPrint(widget.data.pk.toString());
                                 p.likeRecipie(widget.data.pk.toString(),
-                               userId.toString(),
-                                    animationController!,isShare:widget.data.isShare);
+                                    userId.toString(), animationController,
+                                    isShare: widget.data.isShare);
                               },
                               child: Lottie.asset(
                                 "asset/lottie/heart.json",
@@ -276,7 +327,8 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                           SizedBox(height: 10),
                           InkWell(
                             onTap: () {
-                              p.shareRecipe(widget.data.pk.toString(), 1.toString());
+                              p.shareRecipe(
+                                  widget.data.pk.toString(), 1.toString());
                             },
                             child: Icon(
                               Icons.share_outlined,
@@ -346,11 +398,13 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
               ),
               Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child:widget.data.description!=null?smalltext(
-                      text: 
-                      widget.data.description.length > 100
-                          ? widget.data.description.substring(0, 100) + "..."
-                          : widget.data.description):Container())
+                  child: widget.data.description != null
+                      ? smalltext(
+                          text: widget.data.description.length > 100
+                              ? widget.data.description.substring(0, 100) +
+                                  "..."
+                              : widget.data.description)
+                      : Container())
             ],
           ),
         ),
