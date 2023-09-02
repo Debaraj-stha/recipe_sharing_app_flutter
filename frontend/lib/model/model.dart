@@ -49,7 +49,7 @@ class RecipeItem {
   List<String>? hashtags;
   int pk;
   User user;
-  DateTime addedAt;
+  String addedAt;
   int? totalReact;
   int? totalComment;
   int? totalShare;
@@ -88,7 +88,7 @@ class RecipeItem {
       totalComment: json['totalComment'],
       totalReact: json['totalReact'],
       totalShare: json['totalShare'],
-      addedAt: DateTime.parse(json['addedAt']),
+      addedAt: json['addedAt'],
       user: User.fromJson(json['user']),
       image: List<String>.from(json['image']),
       title: json['title'],
@@ -109,7 +109,7 @@ class RecipeItem {
       "totalComment": totalComment,
       "totalReact": totalReact,
       "totalShare": totalShare,
-      "addedAt": addedAt.toIso8601String(),
+      "addedAt": addedAt,
       "user": user.toJson(),
       "image": image,
       "title": title,
@@ -143,7 +143,7 @@ class Search {
 class Comment {
   String comment;
   int id;
-  DateTime created_at;
+  String created_at;
   User user;
   Comment(
       {required this.comment,
@@ -153,7 +153,7 @@ class Comment {
   factory Comment.fromJson(Map<String, dynamic> json) => Comment(
       comment: json['comment'],
       id: json['id'],
-      created_at: DateTime.parse(json['created_at']),
+      created_at:json['created_at'],
       user: User.fromJson(json['user']));
   Map<String, dynamic> toJson() =>
       {"comment": comment, "id": id, "created_at": created_at, "user": user};
@@ -162,7 +162,7 @@ class Comment {
 class React {
   User user;
   int recipeId;
-  DateTime created_at;
+  String created_at;
   int id;
   React(
       {required this.id,
@@ -171,7 +171,7 @@ class React {
       required this.recipeId});
   factory React.fromJson(Map<String, dynamic> json) => React(
       id: json['id'],
-      created_at: DateTime.parse(json['created_at']),
+      created_at: json['created_at'],
       user: User.fromJson(json['user']),
       recipeId: json['recipeId']);
   Map<String, dynamic> toJson() =>

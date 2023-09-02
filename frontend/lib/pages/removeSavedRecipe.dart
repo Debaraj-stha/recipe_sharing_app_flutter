@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
+import 'package:frontend/pages/singleRecipePage.dart';
 import 'package:frontend/provider/myProvider.dart';
 import 'package:frontend/utils/mediumtext.dart';
 import 'package:provider/provider.dart';
@@ -18,42 +19,6 @@ class RemoveSavedRecipe extends StatefulWidget {
 
 class _RemoveSavedRecipeState extends State<RemoveSavedRecipe>
     with TickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-  ScrollController _scrollController = ScrollController();
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration:
-          const Duration(seconds: 2), // Change duration to milliseconds
-    );
-    _opacity = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut, // Change curve as needed
-    ));
-
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels > 0) {
-        _controller.forward();
-      }
-      setState(() {
-        
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -100,30 +65,35 @@ class _RemoveSavedRecipeState extends State<RemoveSavedRecipe>
         builder: (context, value, child) {
           return SingleChildScrollView(
             physics: AlwaysScrollableScrollPhysics(),
-            controller: _scrollController,
             child: Container(
               padding: EdgeInsets.all(8),
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      // Use the opacity animation for each list item
-                      return FadeTransition(
-                        opacity: _opacity,
-                        child: buildRecipeList(
-                          value.getSelectedRecipeForDelete(index.toString()),
-                          index,
-                          "List item ${index} Consectetur do dolore cupidatat i. ",
-                          "",
-                        ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final data = value.items[index];
+                  var description = data.description;
+                  String check() {
+                    if (data.description != null) {
+                      if (data.description!.length > 50) {
+                        return data.description!.substring(0, 50)+"...";
+                      } else {
+                        return data.description!;
+                      }
+                    }
+                    else return "";
+                  }
+
+                  return buildRecipeList(
+                      value.getSelectedRecipeForDelete(data.pk.toString()),
+                      data.pk,
+                      data.title ?? "",
+                      data.image!.first,
+                      check(),
+                      data
                       );
-                    },
-                    itemCount: 15,
-                  );
                 },
+                itemCount: value.items.length,
               ),
             ),
           );
@@ -132,12 +102,16 @@ class _RemoveSavedRecipeState extends State<RemoveSavedRecipe>
     );
   }
 
-  Widget buildRecipeList(
-      bool isChheckd, int index, String recipeName, String image) {
+  Widget buildRecipeList(bool isChheckd, int index, String recipeName,
+      String image, String description,data) {
     final p = Provider.of<myProvider>(context, listen: false);
     return InkWell(
-      onTap: () {
-         p.handleSelectedRecipe(index.toString(), isChheckd);
+      onTap: (){
+                      Navigator.push(context,MaterialPageRoute(builder: (context)=>singleRecipePage(data:data)));
+
+      },
+      onLongPress: () {
+        p.handleSelectedRecipe(index.toString(), isChheckd);
       },
       child: Container(
         height: 100,
@@ -148,7 +122,6 @@ class _RemoveSavedRecipeState extends State<RemoveSavedRecipe>
                 onChanged: (value) {
                   p.handleSelectedRecipe(index.toString(), isChheckd);
                 }),
-                
             Container(
               height: 80,
               width: 100,
@@ -157,11 +130,23 @@ class _RemoveSavedRecipeState extends State<RemoveSavedRecipe>
                       image: AssetImage("asset/images/discover.png"))),
             ),
             Expanded(
-                child: smalltext(
-              text: recipeName,
-              color: Colors.black,
-              family: "Lato",
-              weight: FontWeight.bold,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                smalltext(
+                  text: recipeName,
+                  color: Colors.black,
+                  family: "Lato",
+                  weight: FontWeight.bold,
+                ),
+                smalltext(
+                  text: description,
+                  color: Colors.black,
+                  family: "Lato",
+                  weight: FontWeight.bold,
+                )
+              ],
             ))
           ],
         ),

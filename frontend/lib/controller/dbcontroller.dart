@@ -73,13 +73,13 @@ class dbController {
     return true;
   }
 
-  Future<List<User>> getUser(String email) async {
+  Future<List<User>> getUser() async {
     var dbClient = await db;
     if (dbClient == null) {
       return [];
     } else {
       final List<Map<String, Object?>> user =
-          await dbClient.query("user", where: "email=?", whereArgs: [email]);
+          await dbClient.query("user");
       return user.map((e) => User.fromJson(e)).toList();
     }
   }

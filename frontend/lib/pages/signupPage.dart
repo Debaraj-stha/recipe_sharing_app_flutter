@@ -3,6 +3,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
 import 'package:frontend/pages/loginPage.dart';
+import 'package:frontend/pages/otpPage.dart';
 import 'package:frontend/utils/bigtext.dart';
 import 'package:frontend/utils/mediumtext.dart';
 import 'package:frontend/utils/smalltext.dart';
@@ -63,7 +64,9 @@ class _signupPageState extends State<signupPage> {
                     ElevatedButton.styleFrom(primary: constraints.primaryColor),
                 onPressed: () {
                   if (p.formKey.currentState!.validate()) {
-                    p.signin();
+                    p.sendMail();
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => otpPage()));
                   } else {
                     debugPrint("invalid");
                   }
@@ -91,8 +94,9 @@ class _signupPageState extends State<signupPage> {
               children: [
                 smalltext(text: "Alreday have an account?"),
                 InkWell(
-                  onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>loginPage()));
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => loginPage()));
                   },
                   child: Container(
                       child: mediumtext(

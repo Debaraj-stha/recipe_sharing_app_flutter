@@ -173,7 +173,8 @@ class _discoverPageState extends State<discoverPage> {
             final data = dummyData[index];
             return InkWell(
               onTap: (){
-Navigator.push(context, MaterialPageRoute(builder: (context)=>singleRecipePage(user: data['user'], description: data['description'], addedAt: data['addedAt'], media: data['media'],title: data['title'],)));
+Navigator.push(context, MaterialPageRoute(builder: (context)=>singleRecipePage(data:data,
+ )));
               },
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 5),

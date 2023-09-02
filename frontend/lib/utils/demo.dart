@@ -66,14 +66,8 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                 context,
                 MaterialPageRoute(
                     builder: (context) => singleRecipePage(
-                        user: widget.data.user,
-                        description: widget.data.description,
-                        addedAt: widget.data.addedAt.toIso8601String(),
-                        hastag: widget.data.hashtags,
-                        title: widget.data.title,
-                        ingredients: widget.data.ingredients,
-                        steps: widget.data.steps,
-                        media: widget.data.image)));
+                          data: widget.data,
+                        )));
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -84,82 +78,90 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: InkWell(
-                          onTap: () {
-                            debugPrint("onTap");
+                            onTap: () {
+                              debugPrint("onTap");
 
-                            if (p.specificUserRecipe.isEmpty) {
-                              p.getSpecificuserRecipe(userId.toString());
-                              debugPrint("getSpecificuserRecipe");
-                            }
-                            p.handleisBack();
-                            debugPrint(p.isUserBack.toString());
+                              if (p.specificUserRecipe.isEmpty) {
+                                p.getSpecificuserRecipe(userId.toString());
+                                debugPrint("getSpecificuserRecipe");
+                              }
+                              p.handleisBack();
+                              debugPrint(p.isUserBack.toString());
 
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const userPage()));
-                          },
-                          child:Row(
-  crossAxisAlignment: CrossAxisAlignment.start, // Align text to the top
-  children: [
-    Container(
-      width: 90,
-      height: 90,
-      child: ClipOval(
-        child: Image(
-          image: AssetImage("asset/images/discover.png"),
-          fit: BoxFit.contain,
-        ),
-      ),
-    ),
-    SizedBox(width: 5),
-    Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: TextSpan(
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: "Roboto",
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              children: [
-                TextSpan(
-                  text: widget.data.user.name,
-                  style: TextStyle(fontSize: 18),
-                ),
-                TextSpan(
-                  text: " shared a ${widget.data.owner.name} new Recipe",
-                  style: TextStyle(fontWeight: FontWeight.normal),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 4), // Add spacing between RichText and smalltext
-          smalltext(
-            text: DateFormat('yyyy-MM-dd HH:mm').format(widget.data.addedAt),
-            // family: "Righteous",
-          ),
-        ],
-      ),
-    ),
-    widget.data.isShare
-        ? IconButton(
-            onPressed: () {
-              buttomSheet(context,widget.data.pk);
-            },
-            icon: Icon(
-              Icons.more_horiz,
-              color: constraints.colorBlack,
-            ),
-          )
-        : Container(),
-  ],
-)
-
-                        ),
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const userPage()));
+                            },
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment
+                                  .start, // Align text to the top
+                              children: [
+                                Container(
+                                  width: 90,
+                                  height: 90,
+                                  child: ClipOval(
+                                    child: Image(
+                                      image: AssetImage(
+                                          "asset/images/discover.png"),
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 5),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      RichText(
+                                        text: TextSpan(
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontFamily: "Roboto",
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: widget.data.user.name,
+                                              style: TextStyle(fontSize: 18),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  " shared a ${widget.data.owner.name} new Recipe",
+                                              style: TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.normal),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                          height:
+                                              4), // Add spacing between RichText and smalltext
+                                      smalltext(
+                                        text: DateFormat('yyyy-MM-dd HH:mm')
+                                            .format(DateTime.parse(
+                                                widget.data.addedAt)),
+                                        // family: "Righteous",
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                widget.data.isShare
+                                    ? IconButton(
+                                        onPressed: () {
+                                          buttomSheet(context, widget.data.pk);
+                                        },
+                                        icon: Icon(
+                                          Icons.more_horiz,
+                                          color: constraints.colorBlack,
+                                        ),
+                                      )
+                                    : Container(),
+                              ],
+                            )),
                       ),
                     )
                   : Container(),
@@ -223,7 +225,7 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                             ),
                             smalltext(
                               text: DateFormat('yyyy-MM-dd HH:mm')
-                                  .format(widget.data.addedAt),
+                                  .format(DateTime.parse(widget.data.addedAt)),
                               weight: FontWeight.w500,
                               // family: "Righteous",
                             ),
@@ -233,7 +235,7 @@ class _demoState extends State<demo> with TickerProviderStateMixin {
                       widget.data.isShare == false
                           ? IconButton(
                               onPressed: () {
-                                buttomSheet(context,widget.data.pk);
+                                buttomSheet(context, widget.data.pk);
                               },
                               icon: Icon(
                                 Icons.more_horiz,

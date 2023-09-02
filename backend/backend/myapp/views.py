@@ -129,8 +129,10 @@ def sendEmail(request):
         return JsonResponse(
             {
                 "status": "success",
+                "key":sessionKey,
                 "message": "verification code sent successfully",
             },
+            status=200
             
         )
     else:
@@ -499,31 +501,39 @@ def getShare():
 
 
 def getMyRecipe(request):
-    myRecipeList = getRecipe("all")
-    return JsonResponse({"statusCode": 200, "recipe": myRecipeList})
+    data=request.GET
+    end=data.get('end')
+    print("end" + str(end))
+    myRecipeList,total = getRecipe("all",int(end))
+
+    return JsonResponse({"statusCode": 200, "recipe": myRecipeList,"total":total})
 
 
 @api_view(["GET"])
 def getSpecificUserRecipe(request):
     userId = request.GET.get("userId")
-    specificUserRecipe = getRecipe(userId)
+    end=request.GET.get("end")
+    specificUserRecipe,total = getRecipe(userId,int(end))
     follower, following = getFollowerFollowingCount(userId, userId)
     return JsonResponse(
         {
             "statusCode": 200,
             "recipe": specificUserRecipe,
+            "total":total,
             "followerFollowing": {"follower": follower, "following": following},
         }
     )
 
 
-def getRecipe(userId):
+def getRecipe(userId,end):
     if userId == "all":
-        recipe = Recipe.objects.all().order_by("-created_at")
+        recipe = Recipe.objects.all().order_by("-created_at")[0:end]
+        totalRecipe=Recipe.objects.all().count()
     else:
         print("userId is " + str(userId))
         user = User.objects.filter(pk=userId).first()
-        recipe = Recipe.objects.filter(user=user).order_by("-created_at")
+        recipe = Recipe.objects.filter(user=user).order_by("-created_at")[0:end]
+        totalRecipe=Recipe.objects.all().count()
     myRecipeList = []
     for r in recipe:
         if r.shareId is not None:
@@ -621,7 +631,7 @@ def getRecipe(userId):
                 "addedAt": r.created_at,
             }
             myRecipeList.append(myObject)
-    return myRecipeList
+    return myRecipeList,totalRecipe
 
 
 @api_view(["POST"])

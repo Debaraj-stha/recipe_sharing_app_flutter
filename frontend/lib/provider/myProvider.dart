@@ -9,13 +9,14 @@ import 'package:frontend/pages/homepage1.dart';
 import 'package:frontend/pages/searchPage.dart';
 import 'package:frontend/utils/toastmessage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:video_player/video_player.dart';
 import 'package:dio/dio.dart' as Dio;
 import 'package:http/http.dart' as http;
-
+import 'package:uuid/uuid.dart';
 import '../controller/dbcontroller.dart';
 import '../model/model.dart';
-
+import 'package:flutter_session_manager/flutter_session_manager.dart';
 class myProvider with ChangeNotifier {
   late PageController pageController;
   late TextEditingController nameController;
@@ -75,13 +76,14 @@ class myProvider with ChangeNotifier {
   List<Comment> _comments = [];
   List<Comment> get comments => _comments;
   List<RecipeItem> specificUserRecipe = [];
-  Map<String,dynamic> selectedrecipeforDelete = {};
+  Map<String, dynamic> selectedrecipeforDelete = {};
   bool isUserBack = false;
   List<Follower> followers = [];
   List<Follower> followings = [];
   List<FollowerCount> followerCount = [];
   Map<String, dynamic> followedText = {};
-  // final _dbcontroller=new dbController();
+  late User user;
+  final _dbcontroller = new dbController();
   List<RecipeItem> savedRecipe = [];
   void initialize() {
     pageController = PageController();
@@ -118,7 +120,6 @@ class myProvider with ChangeNotifier {
     passwordController.dispose();
     emailNode.dispose();
     emailNode.dispose();
-    // _dbcontroller.dispose();
     nameNode.dispose();
     imagePageController.dispose();
     singleRecipePageController.dispose();
@@ -476,38 +477,6 @@ class myProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void loadRecipe() async {
-    try {
-      if (_items.isEmpty) {
-        isLoading = true;
-        _items = [];
-        final response = await http.get(Uri.parse(baseURL + "/get-recipe"));
-        final data = jsonDecode(response.body);
-
-        if (response.statusCode == 200) {
-          final recipedata = data['recipe'];
-
-          for (var item in recipedata) {
-            _items.add(RecipeItem.fromJson(item));
-            savedRecipe.add(RecipeItem.fromJson(item));
-          }
-          // debugPrint(recipedata.toString());
-          showmessage("Recipe loaded successfully");
-          Future.delayed(Duration(seconds: 2), () {
-            toggleLoading();
-          });
-        } else {
-          showmessage("Something went wrong.");
-        }
-        notifyListeners();
-      }
-    } on Exception catch (e) {
-      debugPrint("exception occured : " + e.toString());
-      showmessage("exception occured : " + e.toString(), bgColor: Colors.red);
-    }
-    bool isReact = isAlreadyReact(20, 29);
-  }
-
   void toggleLoading() {
     isLoading = false;
     notifyListeners();
@@ -660,7 +629,7 @@ class myProvider with ChangeNotifier {
     } else {
       showmessage(data['message'], bgColor: Colors.red);
     }
-    loadRecipe();
+    // loadRecipe();
     notifyListeners();
   }
 
@@ -756,12 +725,15 @@ class myProvider with ChangeNotifier {
   }
 
   void getSpecificuserRecipe(String userId) async {
+    int totalRecipe = 0;
     try {
+      final start = 0, end = 2;
       final response = await http
-          .get(Uri.parse(baseURL + "/get-user-recipe?userId=$userId"));
+          .get(Uri.parse(baseURL + "/get-user-recipe?userId=$userId&end=$end"));
       final data = jsonDecode(response.body);
       if (data['statusCode'] == 200) {
         var recipe = data['recipe'];
+        totalRecipe = data['total'];
         var followerFollowing = data['followerFollowing'];
         for (var item in recipe) {
           specificUserRecipe.add(RecipeItem.fromJson(item));
@@ -801,17 +773,20 @@ class myProvider with ChangeNotifier {
   void saveRecipe(int pk) {
     try {
       RecipeItem item = getRecipeContentFromId(pk);
-      // _dbcontroller.insertRecipe(item).then((value){
-      //   if(value){
-      //     showmessage("Recipe saved successfully");
-      //   }
-      //   else{
-      //      showmessage(" Something went wrong while saving Recipe saved successfully");
-      //   }
-      // });
+      final user=item.user.toJson();
+    
+      debugPrint(user.toString());
+      _dbcontroller.insertRecipe(item).then((value){
+        if(value){
+          showmessage("Recipe saved successfully");
+        }
+        else{
+           showmessage(" Something went wrong while saving Recipe saved successfully");
+        }
+      });
       notifyListeners();
     } on Exception catch (e) {
-      showmessage(e.toString());
+      showmessage("exception"+e.toString());
     }
   }
 
@@ -878,15 +853,175 @@ class myProvider with ChangeNotifier {
       showmessage(e.toString());
     }
   }
-  
-  bool getSelectedRecipeForDelete(String index)=>selectedrecipeforDelete[index]??false;
-  void handleSelectedRecipe(String index,bool value){
-    if(selectedrecipeforDelete.containsKey(index)){
-      selectedrecipeforDelete[index]=!selectedrecipeforDelete[index];
-    }
-    else{
-      selectedrecipeforDelete[index]=value;
+
+  bool getSelectedRecipeForDelete(String index) =>
+      selectedrecipeforDelete[index] ?? false;
+  void handleSelectedRecipe(String index, bool value) {
+    if (selectedrecipeforDelete.containsKey(index)) {
+      selectedrecipeforDelete[index] = !selectedrecipeforDelete[index];
+    } else {
+      selectedrecipeforDelete[index] = value;
     }
     notifyListeners();
   }
+
+  bool isAlreadyLoading = false;
+  int end = 2, total = 0;
+  loadRecipe(RefreshController refreshController,
+      {bool isloadMore = false}) async {
+    debugPrint("isloadmore: " + isloadMore.toString());
+    // if (isAlreadyLoading) {
+    //   return;
+    // }
+
+    // Proceed with loading data when it's a refresh or when there might be more data to load
+    if (!isloadMore || (isloadMore || end < total)) {
+      debugPrint("total $total and end=$end");
+      try {
+        isAlreadyLoading = true;
+        isLoading = true;
+
+        final response =
+            await http.get(Uri.parse(baseURL + "/get-recipe?end=$end"));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final recipedata = data['recipe'];
+          total = data['total'];
+          debugPrint("total=$total");
+
+          if (isloadMore) {
+            _items.clear();
+            end += 2;
+          }
+
+          for (var item in recipedata) {
+            _items.add(RecipeItem.fromJson(item));
+            savedRecipe.add(RecipeItem.fromJson(item));
+          }
+
+          // Delay for demonstration purposes; you can remove this in production.
+          await Future.delayed(Duration(seconds: 2));
+
+          showmessage(isloadMore
+              ? "Recipe loaded successfully"
+              : "Recipe refresh successfully");
+          refreshController.refreshCompleted(); // Complete the refresh
+          refreshController.loadComplete(); // Complete the load more
+        } else {
+          showmessage("Something went wrong.");
+          refreshController.refreshFailed(); // Handle refresh failure
+          refreshController.loadFailed(); // Handle load more failure
+        }
+      } catch (e) {
+        debugPrint("Exception occurred: $e");
+        showmessage("Exception occurred: $e", bgColor: Colors.red);
+        refreshController.refreshFailed(); // Handle refresh failure
+        refreshController.loadFailed(); // Handle load more failure
+      } finally {
+        isAlreadyLoading = false;
+        isLoading = false;
+      }
+    } else {
+      return refreshController.loadNoData();
+    }
+  }
+
+  handleRefresh(RefreshStatus, RefreshController refreshController) async {
+    try {
+      await loadRecipe(refreshController);
+      refreshController.refreshCompleted();
+    } catch (e) {
+      refreshController.refreshFailed();
+    }
+  }
+
+  handleLoading(LoadStatus, RefreshController refreshController) async {
+    await loadRecipe(refreshController, isloadMore: true);
+    notifyListeners();
+    return refreshController.loadComplete();
+  }
+
+  int sortByAlphaValue = 1;
+  void handleSortValue(int value, String type) {
+    sortByAlphaValue = value;
+    if (type == "follower") {
+      if (value == 1) {
+        followers
+          ..sort((a, b) {
+            return a.user.name.compareTo(b.user.name);
+          });
+        notifyListeners();
+      } else {
+        followers
+          ..sort((a, b) {
+            return b.user.name.compareTo(a.user.name);
+          });
+      }
+    } else {
+      if (value == 1) {
+        followings
+          ..sort((a, b) {
+            return a.user.name.compareTo(b.user.name);
+          });
+        notifyListeners();
+      } else {
+        followings
+          ..sort((a, b) {
+            return b.user.name.compareTo(a.user.name);
+          });
+      }
+    }
+    notifyListeners();
+  }
+
+  var uuid = Uuid();
+  late String responsekey;
+  void sendMail() async {
+    try {
+      var key = uuid.v4;
+      final response = await http.post(Uri.parse(baseURL + "/send-email"),
+          body: {"mailto": emailController.text, "key": key});
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        responsekey = data['key'];
+      } else {
+        showmessage(data['message']);
+      }
+    } on Exception catch (e) {
+      showmessage("Exception occurred: " + e.toString());
+    }
+  }
+
+  void verifyOTP() async {
+    try {
+      final response = await http.post(Uri.parse(baseURL + "/verify-otp"),
+          body: {"otp": emailController.text, "key": responsekey});
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        signin();
+      } else {
+        showmessage(data['message']);
+      }
+    } on Exception catch (e) {
+      showmessage("Exception occurred: " + e.toString());
+    }
+  }
+
+  void saveUser(User user) async {
+    try {
+      await SessionManager().set('user', user);
+    } on Exception catch (e) {
+      showmessage("Exception occurred: " + e.toString());
+    }
+  }
+
+  void getUser() async {
+    try {
+      user = User.fromJson(await SessionManager().get('usre'));
+    } on Exception catch (e) {
+      showmessage("Exception occurred: " + e.toString());
+    }
+  }
+  
 }

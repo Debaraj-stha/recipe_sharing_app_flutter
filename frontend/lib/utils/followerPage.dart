@@ -6,6 +6,7 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:frontend/controller/constraints.dart';
 import 'package:frontend/provider/myProvider.dart';
 import 'package:frontend/utils/buildFollowButton.dart';
+import 'package:frontend/utils/dropDownButton.dart';
 import 'package:frontend/utils/mediumtext.dart';
 import 'package:frontend/utils/smalltext.dart';
 import 'package:frontend/utils/toastmessage.dart';
@@ -44,6 +45,7 @@ class followerPage extends StatelessWidget {
                       debugPrint(isAlreadyFollow.toString());
                       return Row(
                         children: [
+                  
                           Container(
                             margin: EdgeInsets.only(bottom: 10),
                             width: 60,
@@ -67,45 +69,60 @@ class followerPage extends StatelessWidget {
                             family: "Lato",
                           ),
                           Spacer(),
-                          InkWell(onTap: () {
-                            if (!isAlreadyFollow) {
-                              value.followUser("1", follower.user.pk.toString(),
-                                  follower.id.toString());
-                              debugPrint(p.followedText.toString());
-                            } else {
-                              showmessage(
-                                  "You have already followed to this user");
-                            }
-                          }, onHover: (value) {
-                            debugPrint("Hover");
-                          }, child: buildFollowButton(
-                            text: isAlreadyFollow
-                                ? value.chnageFollowedText(
-                                    follower.id.toString(), "Following")
-                                : value.chnageFollowedText(
-                                    follower.id.toString(), "Follow"),
-                            bgColor: constraints.colorBlack,
-                            textColor: constraints.colorWhite,
-                            isBorder: true,
-                          ))
+                          InkWell(
+                              onTap: () {
+                                if (!isAlreadyFollow) {
+                                  value.followUser(
+                                      "1",
+                                      follower.user.pk.toString(),
+                                      follower.id.toString());
+                                  debugPrint(p.followedText.toString());
+                                } else {
+                                  showmessage(
+                                      "You have already followed to this user");
+                                }
+                              },
+                              onHover: (value) {
+                                debugPrint("Hover");
+                              },
+                              child: buildFollowButton(
+                                text: isAlreadyFollow
+                                    ? value.chnageFollowedText(
+                                        follower.id.toString(), "Following")
+                                    : value.chnageFollowedText(
+                                        follower.id.toString(), "Follow"),
+                                bgColor: constraints.colorBlack,
+                                textColor: constraints.colorWhite,
+                                isBorder: true,
+                              ))
                         ],
                       );
                     });
               },
             )),
-        Positioned(
-            top: 0,
-            left: 0,
-            child: Container(
-                height: 40,
-                width: constraints().getDeviceWidth(context),
-                padding: EdgeInsets.only(left: 5),
-                // margin: EdgeInsets.only(bottom: 10),
-                child: Center(
-                    child: mediumtext(
-                  text: "Follower",
-                  family: "LobsterTwo",
-                ))))
+             Positioned(
+          top: 0,
+          left: 10,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            dropDownButton(type:"follower"),
+              Container(
+                  height: 40,
+                  width: constraints().getDeviceWidth(context),
+                  padding: EdgeInsets.only(left: 5),
+                  // margin: EdgeInsets.only(bottom: 10),
+                  child: Center(
+                      child: mediumtext(
+                    text: "Follower",
+                    family: "LobsterTwo",
+                  ))),
+            ],
+          ),
+        )
+           
+       
       ],
     );
   }
